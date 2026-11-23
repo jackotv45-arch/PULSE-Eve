@@ -80,7 +80,12 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
       }
       setErrors(next);
       const first = FIELDS.find((f) => next[f.name])?.name ?? (next.consent ? "consent" : null);
-      if (first) document.getElementById(`f-${first}`)?.focus();
+      if (first) {
+        // Centre le champ en erreur pour qu'il ne passe pas sous le menu collé en haut.
+        const el = document.getElementById(`f-${first}`);
+        el?.focus({ preventScroll: true });
+        el?.scrollIntoView({ block: "center", behavior: "smooth" });
+      }
       return;
     }
     setSubmitting(true);

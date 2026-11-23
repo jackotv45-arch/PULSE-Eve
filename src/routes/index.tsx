@@ -8,6 +8,7 @@ import Programme from "@/components/pulse/Programme";
 import RegisterSection from "@/components/pulse/RegisterSection";
 import Faq from "@/components/pulse/Faq";
 import Footer, { FinalCta } from "@/components/pulse/Footer";
+import MobileCta from "@/components/pulse/MobileCta";
 import { useReveal, useScrollProgress } from "@/components/pulse/reveal";
 import { eventQueryOptions } from "@/lib/event.queries";
 import { CURRENT_EVENT_SLUG } from "@/lib/registration";
@@ -51,6 +52,7 @@ function Index() {
   }
 
   const full = event.capacity != null && event.registeredCount >= event.capacity;
+  const spotsLeft = event.capacity != null ? Math.max(0, event.capacity - event.registeredCount) : null;
   return (
     <>
       <div className="scroll-progress" ref={bar} aria-hidden="true" />
@@ -64,6 +66,7 @@ function Index() {
         <FinalCta full={full} />
       </main>
       <Footer />
+      {!full && <MobileCta spotsLeft={event.registeredCount >= 20 ? spotsLeft : null} />}
     </>
   );
 }
