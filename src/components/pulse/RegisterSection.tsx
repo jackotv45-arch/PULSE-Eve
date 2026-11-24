@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, CircleX, Ticket } from "lucide-react";
+import { SiteSelect } from "@/components/ui/site-select";
 import { registerParticipant, type PublicEvent } from "@/lib/event.functions";
 import { AGE_RANGE_OPTIONS, GENDER_OPTIONS, REGISTER_ERRORS, registrationSchema } from "@/lib/registration";
 import { delay } from "./reveal";
@@ -219,35 +220,35 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
 
                 <div className="field">
                   <label htmlFor="f-gender">Sexe</label>
-                  <select
+                  <SiteSelect
                     id="f-gender"
                     name="gender"
                     value={values.gender}
-                    onChange={(e) => set("gender", e.target.value as Values["gender"])}
-                    aria-invalid={errors.gender ? true : undefined}
-                    aria-describedby={errors.gender ? "e-gender" : undefined}
+                    onValueChange={(value) => set("gender", value as Values["gender"])}
+                    invalid={!!errors.gender}
+                    describedBy={errors.gender ? "e-gender" : undefined}
+                    className="field-select"
+                    placeholder="Sélectionnez une option"
+                    options={GENDER_OPTIONS.map((option) => ({ value: option, label: option }))}
                     required
-                  >
-                    <option value="" disabled>Sélectionnez une option</option>
-                    {GENDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                  </select>
+                  />
                   {errors.gender && <span className="field-error" id="e-gender">{errors.gender}</span>}
                 </div>
 
                 <div className="field">
                   <label htmlFor="f-ageRange">Âge</label>
-                  <select
+                  <SiteSelect
                     id="f-ageRange"
                     name="ageRange"
                     value={values.ageRange}
-                    onChange={(e) => set("ageRange", e.target.value as Values["ageRange"])}
-                    aria-invalid={errors.ageRange ? true : undefined}
-                    aria-describedby={errors.ageRange ? "e-ageRange" : undefined}
+                    onValueChange={(value) => set("ageRange", value as Values["ageRange"])}
+                    invalid={!!errors.ageRange}
+                    describedBy={errors.ageRange ? "e-ageRange" : undefined}
+                    className="field-select"
+                    placeholder="Sélectionnez une tranche"
+                    options={AGE_RANGE_OPTIONS.map((option) => ({ value: option, label: option }))}
                     required
-                  >
-                    <option value="" disabled>Sélectionnez une tranche</option>
-                    {AGE_RANGE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-                  </select>
+                  />
                   {errors.ageRange && <span className="field-error" id="e-ageRange">{errors.ageRange}</span>}
                 </div>
 

@@ -74,7 +74,13 @@ export function downloadCsv(filename: string, rows: (string | number)[][]) {
   URL.revokeObjectURL(a.href);
 }
 
-export const fmt = (iso: string | null) =>
-  iso
-    ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "short", timeStyle: "short", timeZone: "Africa/Libreville" }).format(new Date(iso))
-    : "—";
+export const fmt = (iso: string | null) => {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (!Number.isFinite(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("fr-FR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "Africa/Libreville",
+  }).format(date);
+};

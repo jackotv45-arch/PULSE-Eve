@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarCog, ClipboardList, ExternalLink, LayoutDashboard, LogOut, Plus, ScanLine, ScrollText, Users } from "lucide-react";
 import { Logo } from "@/components/pulse/Header";
 import { useReveal } from "@/components/pulse/reveal";
+import { AdminSectionBoundary } from "@/components/admin/AdminSectionBoundary";
 import Login from "@/components/admin/Login";
 import Dashboard from "@/components/admin/Dashboard";
 import EventEditor from "@/components/admin/EventEditor";
@@ -11,6 +12,7 @@ import Registrations from "@/components/admin/Registrations";
 import Scanner from "@/components/admin/Scanner";
 import Journal from "@/components/admin/Journal";
 import Team from "@/components/admin/Team";
+import { SiteSelect } from "@/components/ui/site-select";
 import { errMsg, useAdminSession } from "@/components/admin/useAdmin";
 import { browserSupabase } from "@/lib/supabase-browser";
 import { getEventData, getMe, listEvents } from "@/lib/admin/admin.functions";
@@ -131,11 +133,14 @@ function Shell({ me }: { me: { userId: string; role: "admin" | "agent"; email: s
           </div>
           {tab !== "team" && tab !== "new" && list.length > 0 && (
             <div className="adm-toolbar" style={{ marginBottom: 0 }}>
-              <select className="adm-select" value={current?.id ?? ""} onChange={(e) => setEventId(e.target.value)} aria-label="Événement">
-                {list.map((e) => (
-                  <option key={e.id} value={e.id}>{e.title}{e.isFeatured ? " ★ en ligne" : ""}</option>
-                ))}
-              </select>
+              <SiteSelect
+                className="adm-select"
+                value={current?.id ?? ""}
+                onValueChange={setEventId}
+                ariaLabel="Événement"
+                placeholder="Choisir un événement"
+                options={list.map((e) => ({ value: e.id, label: `${e.title}${e.isFeatured ? " ★ en ligne" : ""}` }))}
+              />
               {isAdmin && <button className="adm-btn" onClick={() => setTab("new")}><Plus size={14} /> Nouvel événement</button>}
             </div>
           )}
@@ -143,7 +148,9 @@ function Shell({ me }: { me: { userId: string; role: "admin" | "agent"; email: s
             <button className="adm-btn" onClick={() => setTab("new")}><Plus size={14} /> Nouvel événement</button>
           )}
         </div>
-        {body}
+        <AdminSectionBoundary key={tab} section={meta.eyebrow}>
+          {body}
+        </AdminSectionBoundary>
       </main>
     </div>
   );

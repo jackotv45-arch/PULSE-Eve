@@ -8,7 +8,9 @@ import { errMsg } from "./useAdmin";
 /** ISO → valeur d'un champ datetime-local à l'heure de Libreville (UTC+1). */
 const toLocal = (iso: string) => {
   if (!iso) return "";
-  const d = new Date(new Date(iso).getTime() + 60 * 60 * 1000);
+  const timestamp = Date.parse(iso);
+  if (!Number.isFinite(timestamp)) return "";
+  const d = new Date(timestamp + 60 * 60 * 1000);
   return d.toISOString().slice(0, 16);
 };
 const fromLocal = (v: string) => (v ? `${v}:00+01:00` : "");

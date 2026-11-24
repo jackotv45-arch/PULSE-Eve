@@ -1397,29 +1397,61 @@ footer {
   transition: border-color .2s ease;
 }
 .field input:focus { outline: none; border-color: var(--green); }
-.field select {
-  appearance: none;
-  -webkit-appearance: none;
+.field .site-select-trigger {
+  min-height: 46px;
   width: 100%;
-  padding: 14px 42px 14px 14px;
-  background-color: #202020;
-  background-image: linear-gradient(45deg, transparent 50%, var(--green) 50%), linear-gradient(135deg, var(--green) 50%, transparent 50%);
-  background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
-  background-size: 5px 5px;
-  background-repeat: no-repeat;
+  padding: 14px;
+  background: #202020;
   color: #f5f5f5;
   border: 1px solid #535353;
   font-size: 12px;
   min-width: 0;
-  color-scheme: dark;
+  font-family: inherit;
+  line-height: 1.4;
+  text-align: left;
+  border-radius: 0;
   cursor: pointer;
-  transition: border-color .2s ease;
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
-.field select:hover { border-color: #777; }
-.field select:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px #e538451f; }
-.field select[aria-invalid="true"] { border-color: #ffb4a8; }
-.field select option { background: #171717; color: #fff; }
-.field select option:checked { background: #e53845; color: #fff; }
+.field .site-select-trigger:hover { border-color: #777; }
+.field .site-select-trigger:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 3px #e538451f; }
+.field .site-select-trigger[aria-invalid="true"] { border-color: #ffb4a8; }
+.field .site-select-trigger[data-placeholder] { color: #a5a5a5; }
+.site-select-trigger > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-select-trigger > svg { color: var(--green); opacity: 1; flex-shrink: 0; }
+.site-select-content {
+  z-index: 100;
+  min-width: var(--radix-select-trigger-width);
+  max-height: var(--radix-select-content-available-height);
+  overflow: hidden;
+  padding: 4px;
+  color: #f5f5f5;
+  background: #171717;
+  border: 1px solid #535353;
+  border-radius: 0;
+  box-shadow: 0 16px 40px #000b;
+}
+.site-select-content[data-state="open"] { animation: selectMenuIn .14s ease-out both; }
+.site-select-content [data-radix-select-viewport] { height: auto !important; max-height: inherit; }
+.site-select-item {
+  min-height: 38px;
+  padding: 9px 34px 9px 12px;
+  color: #e7e7e7;
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.4;
+  border-radius: 0;
+  cursor: pointer;
+  outline: none;
+}
+.site-select-item[data-highlighted] { color: #fff; background: #e5384526; }
+.site-select-item[data-state="checked"] { color: #fff; }
+.site-select-item [data-radix-select-item-indicator] { color: var(--green); }
+.site-select-item[data-disabled] { opacity: .45; cursor: not-allowed; }
+@keyframes selectMenuIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 .field input[aria-invalid="true"] { border-color: #ffb4a8; }
 .choice-field { min-width: 0; border: 0; padding: 0; }
 .choice-field legend { display: block; width: 100%; font-size: 11px; color: #bdbdbd; margin: 18px 0 8px; }
@@ -1684,10 +1716,12 @@ nav a.active { color: var(--green); }
 .adm-top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 22px; margin-bottom: 38px; }
 .adm-top h1 { font-size: clamp(44px, 5vw, 72px); margin: 14px 0 0; animation: revealUp .7s ease backwards; }
 .adm-top .eyebrow { animation: fadeIn .6s ease backwards; }
-.adm-select {
-  background: #171717; border: 1px solid #ffffff1f; padding: 12px 14px; font-size: 12px; min-width: 240px; color: #f5f5f5;
+.adm-select.site-select-trigger {
+  min-height: 46px; background: #171717; border: 1px solid #ffffff1f; padding: 12px 14px; font-size: 12px;
+  min-width: 240px; color: #f5f5f5; font-family: inherit; line-height: 1.4; text-align: left; border-radius: 0;
 }
-.adm-select:focus, .adm-input:focus, .adm-textarea:focus { outline: none; border-color: var(--green); }
+.adm-select.site-select-trigger:focus, .adm-input:focus, .adm-textarea:focus { outline: none; border-color: var(--green); }
+.adm-select.site-select-trigger:hover { border-color: #e5384580; }
 .adm-badge {
   font-size: 9px; letter-spacing: 1.6px; font-weight: 600; padding: 4px 8px; border: 1px solid #e5384566; color: var(--green);
   text-transform: uppercase;

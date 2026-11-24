@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, Pencil, Printer, RotateCcw, UserCheck, X } from "lucide-react";
+import { SiteSelect } from "@/components/ui/site-select";
 import { AGE_RANGE_OPTIONS, GENDER_OPTIONS } from "@/lib/registration";
 import {
   checkIn,
@@ -64,12 +65,19 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
     <>
       <div className="adm-toolbar">
         <input className="adm-input" placeholder="Rechercher : nom, e-mail, téléphone, référence…" value={q} onChange={(e) => setQ(e.target.value)} />
-        <select className="adm-select" style={{ minWidth: 160 }} value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
-          <option value="all">Tous ({regs.length})</option>
-          <option value="present">Présents</option>
-          <option value="absent">Absents</option>
-          <option value="cancelled">Annulés</option>
-        </select>
+        <SiteSelect
+          className="adm-select"
+          style={{ minWidth: 160 }}
+          value={filter}
+          onValueChange={(value) => setFilter(value as typeof filter)}
+          placeholder="Filtrer les inscrits"
+          options={[
+            { value: "all", label: `Tous (${regs.length})` },
+            { value: "present", label: "Présents" },
+            { value: "absent", label: "Absents" },
+            { value: "cancelled", label: "Annulés" },
+          ]}
+        />
         <button className="adm-btn" onClick={exportCsv}><Download size={14} /> Inscriptions (CSV)</button>
         <button className="adm-btn" onClick={exportAttestationRecipients} disabled={presentCount === 0}>
           <Download size={14} /> Attestations des présents ({presentCount})
@@ -164,10 +172,10 @@ function EditModal({ reg, onClose, onSaved }: { reg: AdminRegistration; onClose:
         <h3>CORRIGER L’INSCRIPTION</h3>
         <div className="adm-form">
           {f("participantName", "Nom ou prénom ou pseudo")}
-          <label className="adm-field"><span>Sexe</span><select className="adm-select" value={v.gender} onChange={(e) => setV({ ...v, gender: e.target.value })}><option value="" disabled>Choisir…</option>{GENDER_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
-          <label className="adm-field"><span>Âge</span><select className="adm-select" value={v.ageRange} onChange={(e) => setV({ ...v, ageRange: e.target.value })}><option value="" disabled>Choisir…</option>{AGE_RANGE_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
+          <label className="adm-field"><span>Sexe</span><SiteSelect className="adm-select" value={v.gender} onValueChange={(gender) => setV({ ...v, gender })} placeholder="Choisir…" options={GENDER_OPTIONS.map((x) => ({ value: x, label: x }))} /></label>
+          <label className="adm-field"><span>Âge</span><SiteSelect className="adm-select" value={v.ageRange} onValueChange={(ageRange) => setV({ ...v, ageRange })} placeholder="Choisir…" options={AGE_RANGE_OPTIONS.map((x) => ({ value: x, label: x }))} /></label>
           {f("phone", "Téléphone")}{f("email", "E-mail")}{f("profession", "Profession / fonction")}
-          <label className="adm-field"><span>Recevoir les informations UEnergy</span><select className="adm-select" value={v.receiveUpdates ? "yes" : "no"} onChange={(e) => setV({ ...v, receiveUpdates: e.target.value === "yes" })}><option value="yes">Oui</option><option value="no">Non</option></select></label>
+          <label className="adm-field"><span>Recevoir les informations UEnergy</span><SiteSelect className="adm-select" value={v.receiveUpdates ? "yes" : "no"} onValueChange={(value) => setV({ ...v, receiveUpdates: value === "yes" })} placeholder="Choisir…" options={[{ value: "yes", label: "Oui" }, { value: "no", label: "Non" }]} /></label>
         </div>
         {error && <p className="adm-error" style={{ marginTop: 14 }}>{error}</p>}
         <div className="adm-savebar">

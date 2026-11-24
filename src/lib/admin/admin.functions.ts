@@ -36,6 +36,24 @@ export type AdminEvent = {
 type Row = Record<string, unknown>;
 const s = (v: unknown) => (v == null ? "" : String(v));
 
+function mapProgramme(value: unknown): ProgrammeItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item): ProgrammeItem[] => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const row = item as Row;
+    return [{ time: s(row["time"]), tag: s(row["tag"]), title: s(row["title"]), text: s(row["text"]), img: s(row["img"]) }];
+  });
+}
+
+function mapFaq(value: unknown): FaqItem[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item): FaqItem[] => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+    const row = item as Row;
+    return [{ q: s(row["q"]), a: s(row["a"]) }];
+  });
+}
+
 function mapEvent(e: Row): AdminEvent {
   return {
     id: s(e["id"]),
@@ -53,8 +71,8 @@ function mapEvent(e: Row): AdminEvent {
     organizer: s(e["organizer"]),
     heroImage: s(e["hero_image"]),
     isFeatured: Boolean(e["is_featured"]),
-    programme: (e["programme"] as ProgrammeItem[]) ?? [],
-    faq: (e["faq"] as FaqItem[]) ?? [],
+    programme: mapProgramme(e["programme"]),
+    faq: mapFaq(e["faq"]),
   };
 }
 

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, KeyRound, Trash2 } from "lucide-react";
+import { SiteSelect } from "@/components/ui/site-select";
 import { createStaff, listStaff, removeStaff, resetStaffPassword, updateStaffRole } from "@/lib/admin/admin.functions";
 import { staffInputSchema, strongPassword } from "@/lib/admin/schemas";
 import { delay } from "@/components/pulse/reveal";
@@ -51,10 +52,16 @@ export default function Team({ meId }: { meId: string }) {
           </label>
           <label className="adm-field">
             <span>Rôle</span>
-            <select className="adm-select" value={v.role} onChange={(e) => setV({ ...v, role: e.target.value as "admin" | "agent" })}>
-              <option value="admin">Administrateur — gère tout</option>
-              <option value="agent">Agent de contrôle — scan et validation uniquement</option>
-            </select>
+            <SiteSelect
+              className="adm-select"
+              value={v.role}
+              onValueChange={(value) => setV({ ...v, role: value as "admin" | "agent" })}
+              placeholder="Choisir un rôle"
+              options={[
+                { value: "admin", label: "Administrateur — gère tout" },
+                { value: "agent", label: "Agent de contrôle — scan et validation uniquement" },
+              ]}
+            />
           </label>
         </div>
         {msg && <p className={msg.ok ? "adm-ok" : "adm-error"} style={{ marginTop: 14 }}>{msg.text}</p>}
