@@ -6,7 +6,7 @@ import { browserSupabase } from "@/lib/supabase-browser";
 import { bootstrapFirstAdmin, getBootstrapStatus } from "@/lib/admin/admin.functions";
 import { errMsg } from "./useAdmin";
 
-export default function Login({ deniedMessage }: { deniedMessage?: string }) {
+export default function Login({ deniedMessage, configurationError }: { deniedMessage?: string; configurationError?: string }) {
   const status = useQuery({ queryKey: ["admin", "bootstrap"], queryFn: () => getBootstrapStatus() });
   const setup = status.data?.needsSetup ?? false;
   const [email, setEmail] = useState("");
@@ -73,11 +73,16 @@ export default function Login({ deniedMessage }: { deniedMessage?: string }) {
         </label>
         {status.isError && (
           <p className="adm-error">
-            Impossible de vérifier la base de données d’administration : {errMsg(status.error)}. Vérifiez les migrations Supabase et les variables du fichier .env.
+            Impossible de vérifier la base de données d’administration : {errMsg(status.error)}. Vérifiez les migrations Supabase et les variables d’environnement du projet Vercel.
+          </p>
+        )}
+        {configurationError && (
+          <p className="adm-error">
+            Connexion admin indisponible : {configurationError}. Sur Vercel, ajoutez les variables VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY dans Settings → Environment Variables, puis relancez un déploiement.
           </p>
         )}
         {error && <p className="adm-error">{error}</p>}
-        <button className="button" disabled={busy || status.isPending || status.isError}>
+        <button className="button" disabled={busy || status.isPending || status.isError || !!configurationError}>
           {busy ? "Patientez…" : setup ? "Créer et entrer" : "Se connecter"} <ArrowUpRight aria-hidden size={18} />
         </button>
       </form>

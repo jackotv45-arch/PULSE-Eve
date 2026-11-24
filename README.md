@@ -24,6 +24,10 @@ Créez un fichier `.env` à la racine du projet et renseignez les valeurs (Supab
 - `VITE_SUPABASE_URL` (même URL, utilisée par la page de connexion admin)
 - `VITE_SUPABASE_PUBLISHABLE_KEY` (même clé publique, utilisée par la page de connexion admin)
 
+Pour le déploiement Vercel, ajoutez ces cinq variables dans **Project → Settings → Environment Variables**
+(au minimum pour **Production**, et aussi **Preview** si vous utilisez les prévisualisations), puis relancez un déploiement.
+Le fichier `.env` local est ignoré par Git et n’est pas transmis à Vercel.
+
 ## 3. Lancer
 
     npm install      # ou bun install

@@ -2,16 +2,45 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { browserSupabase } from "@/lib/supabase-browser";
 
+export type AdminSessionState =
+  | { status: "loading" }
+  | { status: "ready"; session: Session | null }
+  | { status: "error"; message: string };
+
 /** Session admin côté navigateur (lue après hydratation). */
 export function useAdminSession() {
-  const [session, setSession] = useState<Session | null | undefined>(undefined);
+  const [state, setState] = useState<AdminSessionState>({ status: "loading" });
   useEffect(() => {
-    const sb = browserSupabase();
-    sb.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => data.subscription.unsubscribe();
+    let active = true;
+    try {
+      const sb = browserSupabase();
+      const { data } = sb.auth.onAuthStateChange((_e, session) => {
+        if (active) setState({ status: "ready", session });
+      });
+      void sb.auth
+        .getSession()
+        .then(({ data: sessionData, error }) => {
+          if (!active) return;
+          if (error) setState({ status: "error", message: error.message });
+          else setState({ status: "ready", session: sessionData.session });
+        })
+        .catch((error: unknown) => {
+          if (active) setState({ status: "error", message: errorMessage(error) });
+        });
+      return () => {
+        active = false;
+        data.subscription.unsubscribe();
+      };
+    } catch (error) {
+      setState({ status: "error", message: errorMessage(error) });
+      return undefined;
+    }
   }, []);
-  return session;
+  return state;
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : "La connexion à Supabase a échoué.";
 }
 
 export const errMsg = (e: unknown) => (e instanceof Error ? e.message : "Une erreur est survenue");

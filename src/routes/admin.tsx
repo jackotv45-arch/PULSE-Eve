@@ -44,9 +44,10 @@ const TABS: { id: Tab; label: string; icon: typeof Users; adminOnly?: boolean; e
 
 function AdminPage() {
   const session = useAdminSession();
-  if (session === undefined) return <div className="adm-loading"><Logo /></div>;
-  if (!session) return <Login />;
-  return <Authed key={session.user.id} />;
+  if (session.status === "loading") return <div className="adm-loading"><Logo /></div>;
+  if (session.status === "error") return <Login configurationError={session.message} />;
+  if (!session.session) return <Login />;
+  return <Authed key={session.session.user.id} />;
 }
 
 function Authed() {
