@@ -23,6 +23,9 @@ export type PublicEvent = {
   registrationsOpen: boolean;
   organizer: string | null;
   registeredCount: number;
+  heroImage: string | null;
+  programme: { time: string; tag: string; title: string; text: string; img: string }[];
+  faq: { q: string; a: string }[];
 };
 
 function publicClient() {
@@ -47,35 +50,34 @@ function publicClient() {
   });
 }
 
-export const getPublicEvent = createServerFn({ method: "GET" })
-  .validator((input: { slug: string }) =>
-    z.object({ slug: z.string().min(1).max(80) }).parse(input),
-  )
-  .handler(async ({ data }): Promise<PublicEvent | null> => {
-    const { data: rows, error } = await publicClient().rpc("get_public_event", {
-      p_slug: data.slug,
-    });
-    if (error) {
-      console.error("get_public_event failed", error);
-      throw new Error("Événement indisponible");
-    }
-    const e = rows?.[0];
-    if (!e) return null;
-    return {
-      slug: e.slug,
-      title: e.title,
-      tagline: e.tagline,
-      description: e.description,
-      startsAt: e.starts_at,
-      endsAt: e.ends_at,
-      venue: e.venue,
-      address: e.address,
-      capacity: e.capacity,
-      registrationsOpen: e.registrations_open,
-      organizer: e.organizer,
-      registeredCount: e.registered_count,
-    };
-  });
+/** Événement mis en avant par l'administrateur (contenu entièrement piloté depuis /admin). */
+export const getFeaturedEvent = createServerFn({ method: "GET" }).handler(async (): Promise<PublicEvent | null> => {
+  const { data, error } = await publicClient().rpc("get_featured_event" as never);
+  if (error) {
+    console.error("get_featured_event failed", error);
+    throw new Error("Événement indisponible");
+  }
+  const e = data as Record<string, unknown> | null;
+  if (!e) return null;
+  const str = (k: string) => (e[k] == null ? null : String(e[k]));
+  return {
+    slug: String(e["slug"]),
+    title: String(e["title"]),
+    tagline: str("tagline"),
+    description: str("description"),
+    startsAt: String(e["starts_at"]),
+    endsAt: str("ends_at"),
+    venue: String(e["venue"]),
+    address: str("address"),
+    capacity: (e["capacity"] as number | null) ?? null,
+    registrationsOpen: Boolean(e["registrations_open"]),
+    organizer: str("organizer"),
+    registeredCount: Number(e["registered_count"] ?? 0),
+    heroImage: str("hero_image"),
+    programme: (e["programme"] as PublicEvent["programme"]) ?? [],
+    faq: (e["faq"] as PublicEvent["faq"]) ?? [],
+  };
+});
 
 async function sha256(value: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));

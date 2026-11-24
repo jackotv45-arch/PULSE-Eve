@@ -11,14 +11,13 @@ import Footer, { FinalCta } from "@/components/pulse/Footer";
 import MobileCta from "@/components/pulse/MobileCta";
 import { useReveal, useScrollProgress } from "@/components/pulse/reveal";
 import { eventQueryOptions } from "@/lib/event.queries";
-import { CURRENT_EVENT_SLUG } from "@/lib/registration";
 
 const TITLE = "PULSE FIT DAY — Inscription gratuite · PULSE Libreville";
 const DESCRIPTION =
   "Réservez gratuitement votre place au PULSE FIT DAY à Libreville : entraînement géant, coachs, QR code d’entrée et attestation de participation.";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.ensureQueryData(eventQueryOptions(CURRENT_EVENT_SLUG)),
+  loader: ({ context }) => context.queryClient.ensureQueryData(eventQueryOptions()),
   head: () => ({
     meta: [
       { title: TITLE },
@@ -33,7 +32,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const { data: event } = useSuspenseQuery(eventQueryOptions(CURRENT_EVENT_SLUG));
+  const { data: event } = useSuspenseQuery(eventQueryOptions());
   const bar = useRef<HTMLDivElement>(null);
   useReveal();
   useScrollProgress(bar);
@@ -60,9 +59,9 @@ function Index() {
       <main>
         <Hero event={event} />
         <EventInfo event={event} />
-        <Programme />
+        {event.programme.length > 0 && <Programme items={event.programme} />}
         <RegisterSection event={event} />
-        <Faq />
+        {event.faq.length > 0 && <Faq items={event.faq} />}
         <FinalCta full={full} />
       </main>
       <Footer />

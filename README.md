@@ -56,3 +56,11 @@ ou ajoutez-en une et changez `CURRENT_EVENT_SLUG` dans `src/lib/registration.ts`
 ## Reste à faire
 
 Voir `roadmap.md` : e-mail de confirmation, interface agent (scan), tableau de bord admin, attestations PDF.
+
+## Espace administrateur (`/admin`)
+
+1. Exécutez `supabase/migrations/0002_admin.sql` dans l’éditeur SQL de Supabase.
+2. Ajoutez `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY` dans `.env` (voir `.env.example`).
+3. `npm install` puis `npm run dev`, ouvrez `/admin` : la première visite crée le compte administrateur principal.
+
+Onglets : tableau de bord en temps réel, événement & contenu du site (infos, programme, FAQ, image, capacité, ouverture des inscriptions, événement affiché), inscrits (recherche, correction, annulation, validation manuelle, export), contrôle d’entrée par caméra, journal d’audit, équipe & admins (ajout d’admins ou d’agents, rôles, mots de passe).

@@ -39,7 +39,7 @@ export default function Hero({ event }: { event: PublicEvent }) {
   return (
     <>
       <section className="hero">
-        <img className="hero-image" src={"/images/hero.jpg"} alt="Espace d’entraînement de la salle PULSE" />
+        <img className="hero-image" src={event.heroImage || "/images/hero.jpg"} alt="Espace d’entraînement de la salle PULSE" />
         <div className="hero-content">
           <div className="eyebrow">
             <span className="dot" /> ÉVÉNEMENT · {event.organizer?.toUpperCase() ?? "PULSE"}

@@ -7,3 +7,6 @@
 - Duplicate prevention, capacity and rate limiting are enforced inside the `register_participant` SQL function (atomic, row-locked), not only in the UI, per the client's spec.
 - QR codes encode only `PULSE-EVT:<secret token>` (no personal data); ticket pages are reached by that token.
 - Events are rows in `events` (multi-event ready); the public page shows the slug in `CURRENT_EVENT_SLUG`.
+- Public page content (event info, programme, FAQ, hero image, featured event) lives in the `events` row and is edited from `/admin`; components must read it from `get_featured_event`, never hardcode it.
+- Back-office access is `staff` rows (role admin|agent) checked server-side by `requireStaff`/`requireAdmin` in `src/lib/admin/auth-middleware.ts`; the browser only holds the session token.
+- Check-ins go through the `check_in_participant` SQL function (row lock) so concurrent scans never double-validate.

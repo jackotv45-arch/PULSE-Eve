@@ -1,20 +1,15 @@
 import { ArrowUpRight } from "lucide-react";
+import type { PublicEvent } from "@/lib/event.functions";
 import { delay } from "./reveal";
 
-const PROGRAMME = [
-  { n: "01", time: "08h00", tag: "ACCUEIL & ÉCHAUFFEMENT", title: "WARM-UP GÉANT", text: "Scan du QR, café, et tout le monde en mouvement.", img: "/images/club.jpg" },
-  { n: "02", time: "09h30", tag: "ÉNERGIE & ENDURANCE", title: "FUNCTIONAL CHALLENGE", text: "Des ateliers en équipe, à votre niveau.", img: "/images/training.jpg" },
-  { n: "03", time: "11h30", tag: "MOUVEMENT & CONSEILS", title: "COURS & BILANS COACH", text: "Cours collectif final et bilans personnalisés.", img: "/images/hero.jpg" },
-];
-
-export default function Programme() {
+export default function Programme({ items }: { items: PublicEvent["programme"] }) {
   return (
     <section className="section activities" id="programme">
       <div className="section-heading" data-reveal>
         <div>
           <div className="eyebrow green">02 / LE PROGRAMME</div>
           <h2>
-            TROIS TEMPS FORTS.
+            {items.length > 1 ? `${["","UN","DEUX","TROIS","QUATRE","CINQ","SIX"][items.length] ?? items.length} TEMPS FORTS.` : "UN TEMPS FORT."}
             <br />
             <em>ZÉRO EXCUSE.</em>
           </h2>
@@ -26,10 +21,10 @@ export default function Programme() {
         </p>
       </div>
       <div className="activity-grid">
-        {PROGRAMME.map((a, i) => (
-          <a className="activity" href="#inscription" key={a.n} data-reveal style={delay(i * 120)}>
-            <img src={a.img} alt={a.title} loading="lazy" />
-            <span className="activity-number">{a.n}</span>
+        {items.map((a, i) => (
+          <a className="activity" href="#inscription" key={i} data-reveal style={delay(i * 120)}>
+            <img src={a.img || "/images/training.jpg"} alt={a.title} loading="lazy" />
+            <span className="activity-number">{String(i + 1).padStart(2, "0")}</span>
             <span className="activity-time">{a.time}</span>
             <div>
               <small>{a.tag}</small>

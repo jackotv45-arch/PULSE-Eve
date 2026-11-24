@@ -1,10 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
-import { getPublicEvent, getTicket } from "./event.functions";
+import { getFeaturedEvent, getTicket } from "./event.functions";
 
-export const eventQueryOptions = (slug: string) =>
+export const eventQueryOptions = () =>
   queryOptions({
-    queryKey: ["event", slug],
-    queryFn: () => getPublicEvent({ data: { slug } }),
+    queryKey: ["event", "featured"],
+    queryFn: () => getFeaturedEvent(),
     staleTime: 30_000,
   });
 
