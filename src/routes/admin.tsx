@@ -77,7 +77,9 @@ function Shell({ me }: { me: { userId: string; role: "admin" | "agent"; email: s
     refetchInterval: 10_000, // tableau de bord « temps réel »
   });
   useReveal();
-  useEffect(() => window.scrollTo({ top: 0, behavior: "smooth" }), [tab]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [tab]);
 
   const regs = data.data?.registrations ?? [];
   const active = regs.filter((r) => r.status === "confirmed");
