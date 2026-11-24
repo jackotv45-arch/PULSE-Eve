@@ -20,6 +20,7 @@ export type PublicEvent = {
   venue: string;
   address: string | null;
   capacity: number | null;
+  participantsTargetMin: number | null;
   registrationsOpen: boolean;
   organizer: string | null;
   registeredCount: number;
@@ -70,6 +71,7 @@ export const getFeaturedEvent = createServerFn({ method: "GET" }).handler(async 
     venue: String(e["venue"]),
     address: str("address"),
     capacity: (e["capacity"] as number | null) ?? null,
+    participantsTargetMin: (e["participants_target_min"] as number | null) ?? null,
     registrationsOpen: Boolean(e["registrations_open"]),
     organizer: str("organizer"),
     registeredCount: Number(e["registered_count"] ?? 0),
@@ -98,15 +100,15 @@ export const registerParticipant = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: result, error } = await supabaseAdmin.rpc("register_participant", {
+      p_participant_name: data.participantName,
+      p_gender: data.gender,
+      p_age_range: data.ageRange,
       p_event_slug: data.eventSlug,
-      p_last_name: data.lastName,
-      p_first_name: data.firstName,
-      p_age: data.age,
       p_email: data.email,
       p_phone: data.phone,
       p_phone_normalized: normalizePhone(data.phone),
       p_profession: data.profession,
-      p_organization: data.organization ?? "",
+      p_receive_updates: data.receiveUpdates,
       p_client_key: clientKey,
     });
     if (error || !result) {
@@ -117,8 +119,7 @@ export const registerParticipant = createServerFn({ method: "POST" })
   });
 
 export type Ticket = {
-  firstName: string;
-  lastName: string;
+  participantName: string;
   reference: string;
   status: "confirmed" | "cancelled";
   checkedInAt: string | null;
@@ -144,8 +145,7 @@ export const getTicket = createServerFn({ method: "GET" })
     if (!t) return null;
     const r = t as Record<string, string | null>;
     return {
-      firstName: r["first_name"] ?? "",
-      lastName: r["last_name"] ?? "",
+      participantName: r["participant_name"] ?? [r["first_name"], r["last_name"]].filter(Boolean).join(" "),
       reference: r["reference"] ?? "",
       status: (r["status"] as Ticket["status"]) ?? "confirmed",
       checkedInAt: r["checked_in_at"] ?? null,

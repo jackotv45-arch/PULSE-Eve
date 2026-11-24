@@ -39,10 +39,10 @@ export default function Hero({ event }: { event: PublicEvent }) {
   return (
     <>
       <section className="hero">
-        <img className="hero-image" src={event.heroImage || "/images/hero.jpg"} alt="Espace d’entraînement de la salle PULSE" />
+        <img className="hero-image" src={event.heroImage || "/images/hero.jpg"} alt="Espace de l’événement UENERGY" />
         <div className="hero-content">
           <div className="eyebrow">
-            <span className="dot" /> ÉVÉNEMENT · {event.organizer?.toUpperCase() ?? "PULSE"}
+            <span className="dot" /> ÉVÉNEMENT · {event.organizer?.toUpperCase() ?? "UENERGY"}
           </div>
           <h1>
             {event.title.split(" ").slice(0, -1).join(" ")}
@@ -108,7 +108,7 @@ export default function Hero({ event }: { event: PublicEvent }) {
           <span>
             FIND
             <br />
-            YOUR PULSE.
+            YOUR UENERGY.
           </span>
         </div>
       </section>

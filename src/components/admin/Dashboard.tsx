@@ -15,7 +15,7 @@ export default function Dashboard({ event, regs, audit }: { event: AdminEvent; r
   const rate = participationRate(present, active.length);
   const fill = event.capacity ? Math.min(100, (active.length / event.capacity) * 100) : 0;
   const prof = breakdown(active.map((r) => r.profession.trim()));
-  const org = breakdown(active.map((r) => r.organization.trim()));
+  const ageRanges = breakdown(active.map((r) => r.ageRange.trim()));
   const max = (l: [string, number][]) => Math.max(1, ...l.map((x) => x[1]));
   const stats = [
     ["Inscrits", active.length, false],
@@ -46,6 +46,11 @@ export default function Dashboard({ event, regs, audit }: { event: AdminEvent; r
           <p className="muted" style={{ fontSize: 11 }}>
             Inscriptions {event.registrationsOpen ? "ouvertes" : "fermées"} · {regs.length - active.length} annulée(s)
           </p>
+          {event.participantsTargetMin != null && event.capacity != null && (
+            <p className="muted" style={{ fontSize: 11, marginTop: 6 }}>
+              Objectif : {new Intl.NumberFormat("fr-FR").format(event.participantsTargetMin)} à {new Intl.NumberFormat("fr-FR").format(event.capacity)} participants
+            </p>
+          )}
         </div>
         <div className="adm-card" data-reveal style={delay(100)}>
           <div className="eyebrow green">DERNIERS MOUVEMENTS</div>
@@ -67,7 +72,7 @@ export default function Dashboard({ event, regs, audit }: { event: AdminEvent; r
         </div>
         {[
           ["PAR PROFESSION", prof],
-          ["PAR ORGANISATION", org],
+          ["PAR TRANCHE D’ÂGE", ageRanges],
         ].map(([title, list], k) => (
           <div className="adm-card" key={title as string} data-reveal style={delay(k * 100)}>
             <div className="eyebrow green">RÉPARTITION</div>

@@ -36,7 +36,7 @@ export default function Login({ deniedMessage }: { deniedMessage?: string }) {
         <img src="/images/training.jpg" alt="" />
         <div className="adm-login-copy">
           <div className="eyebrow">
-            <span className="dot" /> BACK-OFFICE PULSE
+            <span className="dot" /> BACK-OFFICE UENERGY
           </div>
           <h1>
             LES COULISSES.
@@ -71,8 +71,13 @@ export default function Login({ deniedMessage }: { deniedMessage?: string }) {
           />
           {setup && <small className="muted">10 caractères min., une majuscule, une minuscule, un chiffre.</small>}
         </label>
+        {status.isError && (
+          <p className="adm-error">
+            Impossible de vérifier la base de données d’administration : {errMsg(status.error)}. Vérifiez les migrations Supabase et les variables du fichier .env.
+          </p>
+        )}
         {error && <p className="adm-error">{error}</p>}
-        <button className="button" disabled={busy}>
+        <button className="button" disabled={busy || status.isPending || status.isError}>
           {busy ? "Patientez…" : setup ? "Créer et entrer" : "Se connecter"} <ArrowUpRight aria-hidden size={18} />
         </button>
       </form>

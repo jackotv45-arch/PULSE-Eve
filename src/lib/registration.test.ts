@@ -2,31 +2,31 @@ import { describe, expect, it } from "vitest";
 import { normalizePhone, qrPayload, registrationSchema } from "./registration";
 
 const valid = {
-  lastName: "Mba",
-  firstName: "Clarisse",
-  age: "28",
   email: "clarisse@exemple.com",
+  participantName: "Clarisse Mba",
+  gender: "Femme",
+  ageRange: "19 - 29",
   phone: "+241 77 12 34 56",
   profession: "Infirmière",
-  organization: "",
+  receiveUpdates: true,
   consent: true,
 };
 
 describe("formulaire d'inscription", () => {
-  it("accepte une inscription complète, organisation facultative", () => {
+  it("accepte une inscription complète", () => {
     expect(registrationSchema.safeParse(valid).success).toBe(true);
   });
 
-  it.each(["lastName", "firstName", "age", "email", "phone", "profession"] as const)(
+  it.each(["participantName", "gender", "ageRange", "email", "phone", "profession", "receiveUpdates"] as const)(
     "refuse l'inscription si %s est vide",
     (field) => {
       expect(registrationSchema.safeParse({ ...valid, [field]: "" }).success).toBe(false);
     },
   );
 
-  it("exige un âge numérique", () => {
-    expect(registrationSchema.safeParse({ ...valid, age: "vingt" }).success).toBe(false);
-    expect(registrationSchema.parse(valid).age).toBe(28);
+  it("exige une tranche d’âge proposée", () => {
+    expect(registrationSchema.safeParse({ ...valid, ageRange: "vingt" }).success).toBe(false);
+    expect(registrationSchema.parse(valid).ageRange).toBe("19 - 29");
   });
 
   it("exige une adresse e-mail valide", () => {

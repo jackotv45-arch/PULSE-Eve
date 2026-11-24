@@ -170,8 +170,8 @@ REVOKE ALL ON FUNCTION public.get_ticket(text) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_ticket(text) TO service_role;
 
 INSERT INTO public.events (slug, title, tagline, description, starts_at, ends_at, venue, address, capacity, organizer)
-VALUES ('pulse-fit-day', 'PULSE FIT DAY',
+VALUES ('pulse-fit-day', 'UENERGY FIT DAY',
   'Une matinée d’entraînement géante, ouverte à tous.',
   'Échauffement collectif, défis functional training, cours collectifs et bilans avec nos coachs. Gratuit, tous niveaux, attestation de participation remise aux présents.',
   '2026-12-12 08:00:00+01', '2026-12-12 13:00:00+01',
-  'Salle PULSE', 'Quartier Louis, Libreville, Gabon', 150, 'PULSE Libreville');
+  'Salle UENERGY', 'Quartier Louis, Libreville, Gabon', 150, 'UENERGY Libreville');

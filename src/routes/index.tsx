@@ -12,9 +12,9 @@ import MobileCta from "@/components/pulse/MobileCta";
 import { useReveal, useScrollProgress } from "@/components/pulse/reveal";
 import { eventQueryOptions } from "@/lib/event.queries";
 
-const TITLE = "PULSE FIT DAY — Inscription gratuite · PULSE Libreville";
+const TITLE = "UENERGY FIT DAY — Inscription gratuite · UENERGY Libreville";
 const DESCRIPTION =
-  "Réservez gratuitement votre place au PULSE FIT DAY à Libreville : entraînement géant, coachs, QR code d’entrée et attestation de participation.";
+  "Réservez gratuitement votre place à UENERGY FIT DAY à Libreville : entraînement géant, coachs, QR code d’entrée et attestation de participation.";
 
 export const Route = createFileRoute("/")({
   loader: ({ context }) => context.queryClient.ensureQueryData(eventQueryOptions()),

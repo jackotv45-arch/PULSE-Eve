@@ -3,6 +3,10 @@ import { z } from "zod";
 /** Événement actuellement mis en avant sur la page publique. */
 export const CURRENT_EVENT_SLUG = "pulse-fit-day";
 
+/** Choix proposés dans le formulaire de pré-inscription UEnergy. */
+export const GENDER_OPTIONS = ["Homme", "Femme"] as const;
+export const AGE_RANGE_OPTIONS = ["8 - 18", "19 - 29", "30 - 40", "40 - 50", "+ de 50"] as const;
+
 /** Délai minimal (ms) entre l'affichage du formulaire et l'envoi : en dessous, c'est un robot. */
 export const MIN_FILL_MS = 2500;
 
@@ -18,7 +22,7 @@ export function normalizePhone(raw: string): string {
   return digits;
 }
 
-const text = (label: string, max = 80) =>
+const text = (label: string, max = 120) =>
   z
     .string()
     .trim()
@@ -26,19 +30,9 @@ const text = (label: string, max = 80) =>
     .max(max, `${label} : ${max} caractères maximum`);
 
 export const registrationSchema = z.object({
-  lastName: text("Le nom"),
-  firstName: text("Le prénom"),
-  age: z
-    .union([z.string(), z.number()])
-    .transform((v) => String(v).trim())
-    .pipe(
-      z
-        .string()
-        .min(1, "L’âge est obligatoire")
-        .regex(/^\d{1,3}$/, "L’âge doit être un nombre"),
-    )
-    .transform(Number)
-    .pipe(z.number().min(5, "Âge invalide").max(120, "Âge invalide")),
+  participantName: text("Le nom, prénom ou pseudo"),
+  gender: z.enum(GENDER_OPTIONS, { message: "Veuillez sélectionner une option" }),
+  ageRange: z.enum(AGE_RANGE_OPTIONS, { message: "Veuillez sélectionner une tranche d’âge" }),
   email: z.string().trim().max(160).email("Adresse e-mail invalide"),
   phone: z
     .string()
@@ -48,8 +42,8 @@ export const registrationSchema = z.object({
       const n = v.replace(/\D/g, "").length;
       return n >= 8 && n <= 15;
     }, "Numéro de téléphone invalide"),
-  profession: text("La profession"),
-  organization: z.string().trim().max(120).optional().default(""),
+  profession: text("La profession ou fonction", 80),
+  receiveUpdates: z.boolean({ message: "Veuillez choisir oui ou non" }),
   consent: z.literal(true, { message: "Votre accord est nécessaire pour vous inscrire" }),
 });
 

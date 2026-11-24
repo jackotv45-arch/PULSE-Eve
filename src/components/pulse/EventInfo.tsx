@@ -4,6 +4,12 @@ import { formatTime } from "@/lib/format";
 import { delay } from "./reveal";
 
 export default function EventInfo({ event }: { event: PublicEvent }) {
+  const participantRange =
+    event.participantsTargetMin != null && event.capacity != null
+      ? `${new Intl.NumberFormat("fr-FR").format(event.participantsTargetMin)}–${new Intl.NumberFormat("fr-FR").format(event.capacity)}`
+      : event.capacity != null
+        ? new Intl.NumberFormat("fr-FR").format(event.capacity)
+        : "∞";
   const day = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", timeZone: "Africa/Libreville" })
     .format(new Date(event.startsAt))
     .replace(".", "")
@@ -37,13 +43,13 @@ export default function EventInfo({ event }: { event: PublicEvent }) {
             <span>Au programme</span>
           </div>
           <div>
-            <strong>{event.capacity ?? "∞"}</strong>
-            <span>Places seulement</span>
+            <strong>{participantRange}</strong>
+            <span>{event.participantsTargetMin != null ? "Participants attendus" : "Places disponibles"}</span>
           </div>
         </div>
       </div>
       <div className="club-photo" data-reveal style={delay(150)}>
-        <img src={"/images/club.jpg"} alt="Équipements de la salle PULSE" loading="lazy" />
+        <img src={"/images/club.jpg"} alt="Équipements du site UENERGY" loading="lazy" />
         <div className="photo-label">
           <span>{event.venue.toUpperCase()} · {event.address?.toUpperCase()}</span>
           <MoveUpRight aria-hidden size={24} />

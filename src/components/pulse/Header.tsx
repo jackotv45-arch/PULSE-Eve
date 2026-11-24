@@ -12,7 +12,7 @@ const LINKS = [
 export function Logo() {
   return (
     <Link className="logo" to="/">
-      PULSE<span>®</span>
+      UENERGY<span>®</span>
     </Link>
   );
 }

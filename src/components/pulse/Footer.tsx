@@ -30,7 +30,7 @@ export default function Footer() {
         <a href="#">Retour en haut ↑</a>
       </div>
       <div className="footer-bottom">
-        <span>© 2026 PULSE Libreville.</span>
+        <span>© 2026 UENERGY Libreville.</span>
         <span>Vos données servent uniquement à la gestion de l’événement et ne sont jamais revendues.</span>
       </div>
     </footer>

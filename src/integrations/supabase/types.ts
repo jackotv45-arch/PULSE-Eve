@@ -68,6 +68,7 @@ export type Database = {
           ends_at: string | null
           id: string
           organizer: string | null
+          participants_target_min: number | null
           registrations_open: boolean
           slug: string
           starts_at: string
@@ -83,6 +84,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           organizer?: string | null
+          participants_target_min?: number | null
           registrations_open?: boolean
           slug: string
           starts_at: string
@@ -98,6 +100,7 @@ export type Database = {
           ends_at?: string | null
           id?: string
           organizer?: string | null
+          participants_target_min?: number | null
           registrations_open?: boolean
           slug?: string
           starts_at?: string
@@ -127,61 +130,73 @@ export type Database = {
       }
       registrations: {
         Row: {
-          age: number
+          age: number | null
+          age_range: string | null
           checked_in_at: string | null
           checked_in_by: string | null
           created_at: string
           email: string
           email_normalized: string
           event_id: string
-          first_name: string
+          first_name: string | null
+          gender: string | null
           id: string
-          last_name: string
+          last_name: string | null
           organization: string | null
+          participant_name: string
           phone: string
           phone_normalized: string
           profession: string
           qr_token: string
+          receive_updates: boolean
           reference: string
           status: string
           updated_at: string
         }
         Insert: {
-          age: number
+          age?: number | null
+          age_range?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
           created_at?: string
           email: string
           email_normalized: string
           event_id: string
-          first_name: string
+          first_name?: string | null
+          gender?: string | null
           id?: string
-          last_name: string
+          last_name?: string | null
           organization?: string | null
+          participant_name: string
           phone: string
           phone_normalized: string
           profession: string
           qr_token: string
+          receive_updates?: boolean
           reference: string
           status?: string
           updated_at?: string
         }
         Update: {
-          age?: number
+          age?: number | null
+          age_range?: string | null
           checked_in_at?: string | null
           checked_in_by?: string | null
           created_at?: string
           email?: string
           email_normalized?: string
           event_id?: string
-          first_name?: string
+          first_name?: string | null
+          gender?: string | null
           id?: string
-          last_name?: string
+          last_name?: string | null
           organization?: string | null
+          participant_name?: string
           phone?: string
           phone_normalized?: string
           profession?: string
           qr_token?: string
+          receive_updates?: boolean
           reference?: string
           status?: string
           updated_at?: string
@@ -222,16 +237,16 @@ export type Database = {
       get_ticket: { Args: { p_token: string }; Returns: Json }
       register_participant: {
         Args: {
-          p_age: number
+          p_age_range: string
           p_client_key: string
           p_email: string
           p_event_slug: string
-          p_first_name: string
-          p_last_name: string
-          p_organization: string
+          p_gender: string
+          p_participant_name: string
           p_phone: string
           p_phone_normalized: string
           p_profession: string
+          p_receive_updates: boolean
         }
         Returns: Json
       }

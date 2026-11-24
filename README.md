@@ -1,6 +1,6 @@
-# PULSE — Page d'inscription aux événements
+# UENERGY — Page d'inscription aux événements
 
-Site de la salle PULSE (Libreville) mis en mode « événement » : présentation de l'événement,
+Site d'événements UENERGY (Libreville) : présentation de l'événement,
 formulaire d'inscription sécurisé et billet avec QR code unique.
 
 Stack : TanStack Start (React 19) + Vite, base de données Supabase (Postgres).
@@ -10,15 +10,19 @@ Stack : TanStack Start (React 19) + Vite, base de données Supabase (Postgres).
 1. Créez un projet sur https://supabase.com.
 2. Ouvrez **SQL Editor** et exécutez le fichier `supabase/migrations/0001_event_registrations.sql`.
    Il crée les tables (événements, inscriptions, journal d'audit, anti-abus), les fonctions
-   sécurisées et l'événement de démonstration « PULSE FIT DAY ».
+   sécurisées et l'événement de démonstration « UENERGY FIT DAY ».
+3. Exécutez ensuite, dans l'ordre, `0002_admin.sql`, `0003_uenergy_registration.sql` et
+   `0004_uenergy_branding.sql` pour initialiser l'administration, les champs du formulaire et les libellés UENERGY.
 
 ## 2. Variables d'environnement
 
-Copiez `.env.example` en `.env` et remplissez les valeurs (Supabase → Settings → API) :
+Créez un fichier `.env` à la racine du projet et renseignez les valeurs (Supabase → Settings → API) :
 
 - `SUPABASE_URL`
 - `SUPABASE_PUBLISHABLE_KEY` (clé publique / anon)
 - `SUPABASE_SERVICE_ROLE_KEY` (clé secrète, utilisée uniquement côté serveur)
+- `VITE_SUPABASE_URL` (même URL, utilisée par la page de connexion admin)
+- `VITE_SUPABASE_PUBLISHABLE_KEY` (même clé publique, utilisée par la page de connexion admin)
 
 ## 3. Lancer
 
@@ -59,8 +63,8 @@ Voir `roadmap.md` : e-mail de confirmation, interface agent (scan), tableau de b
 
 ## Espace administrateur (`/admin`)
 
-1. Exécutez `supabase/migrations/0002_admin.sql` dans l’éditeur SQL de Supabase.
-2. Ajoutez `VITE_SUPABASE_URL` et `VITE_SUPABASE_PUBLISHABLE_KEY` dans `.env` (voir `.env.example`).
-3. `npm install` puis `npm run dev`, ouvrez `/admin` : la première visite crée le compte administrateur principal.
+1. Vérifiez que les quatre migrations précédentes sont appliquées dans Supabase.
+2. Vérifiez que les cinq variables Supabase ci-dessus sont présentes dans `.env`.
+3. `npm install` puis `npm run dev`, ouvrez `/admin` : la première visite permet de créer le compte administrateur principal.
 
 Onglets : tableau de bord en temps réel, événement & contenu du site (infos, programme, FAQ, image, capacité, ouverture des inscriptions, événement affiché), inscrits (recherche, correction, annulation, validation manuelle, export), contrôle d’entrée par caméra, journal d’audit, équipe & admins (ajout d’admins ou d’agents, rôles, mots de passe).

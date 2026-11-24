@@ -20,11 +20,12 @@ export const blankEvent = (): EventInput => ({
   description: "",
   startsAt: "",
   endsAt: "",
-  venue: "Salle PULSE",
+  venue: "Salle UENERGY",
   address: "",
-  capacity: 100,
+  capacity: 1000,
+  participantsTargetMin: 600,
   registrationsOpen: true,
-  organizer: "PULSE Libreville",
+  organizer: "UENERGY Libreville",
   heroImage: "",
   isFeatured: false,
   programme: [],
@@ -97,7 +98,7 @@ export default function EventEditor({
     <div>
       <div className="adm-form">
         {input("title", "Titre de l’événement")}
-        {input("slug", "Identifiant d’URL (ex. pulse-fit-day)")}
+        {input("slug", "Identifiant d’URL (ex. uenergy-fit-day)")}
         {input("tagline", "Accroche (sous le titre)", true)}
         <label className="adm-field full">
           <span>Description</span>
@@ -122,6 +123,17 @@ export default function EventEditor({
             disabled={!isAdmin}
             value={v.capacity ?? ""}
             onChange={(e) => set("capacity", e.target.value ? Number(e.target.value) : null)}
+          />
+        </label>
+        <label className="adm-field">
+          <span>Nombre de participants attendu (minimum)</span>
+          <input
+            className="adm-input"
+            type="number"
+            min={1}
+            disabled={!isAdmin}
+            value={v.participantsTargetMin ?? ""}
+            onChange={(e) => set("participantsTargetMin", e.target.value ? Number(e.target.value) : null)}
           />
         </label>
         {input("organizer", "Organisateur")}

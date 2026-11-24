@@ -5,23 +5,9 @@ import tailwindcss from "@tailwindcss/vite";
 import { nitro } from "nitro/vite";
 
 export default defineConfig(({ mode }) => {
-  // Rend les variables du fichier .env disponibles côté serveur.
-  const env = loadEnv(mode, process.cwd(), "");
-  Object.assign(process.env, env);
-
-  // Ces deux valeurs sont publiques. La clé service-role reste strictement côté serveur.
-  const supabaseUrl = env["VITE_SUPABASE_URL"] || env["SUPABASE_URL"] || env["NEXT_PUBLIC_SUPABASE_URL"] || "";
-  const supabasePublishableKey =
-    env["VITE_SUPABASE_PUBLISHABLE_KEY"] ||
-    env["SUPABASE_PUBLISHABLE_KEY"] ||
-    env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] ||
-    "";
-
+  // Rend les variables du fichier .env (y compris les clés serveur) disponibles via process.env.
+  Object.assign(process.env, loadEnv(mode, process.cwd(), ""));
   return {
-    define: {
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabasePublishableKey),
-    },
     server: { port: 3000 },
     resolve: { tsconfigPaths: true },
     plugins: [

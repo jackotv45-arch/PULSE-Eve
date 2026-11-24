@@ -28,12 +28,17 @@ export const eventInputSchema = z.object({
   venue: z.string().trim().min(1, "Lieu requis").max(120),
   address: z.string().trim().max(200),
   capacity: z.number().int().positive().nullable(),
+  participantsTargetMin: z.number().int().positive().nullable(),
   registrationsOpen: z.boolean(),
   organizer: z.string().trim().max(120),
   heroImage: z.string().trim().max(500),
   isFeatured: z.boolean(),
   programme: z.array(programmeItemSchema).max(12),
   faq: z.array(faqItemSchema).max(30),
+}).superRefine((event, ctx) => {
+  if (event.participantsTargetMin != null && event.capacity != null && event.participantsTargetMin > event.capacity) {
+    ctx.addIssue({ code: "custom", path: ["participantsTargetMin"], message: "Le minimum attendu ne peut pas dépasser la capacité maximale" });
+  }
 });
 export type EventInput = z.infer<typeof eventInputSchema>;
 export type ProgrammeItem = z.infer<typeof programmeItemSchema>;
@@ -57,13 +62,13 @@ export const staffInputSchema = z.object({
 
 export const registrationEditSchema = z.object({
   id: z.string().uuid(),
-  lastName: z.string().trim().min(1).max(80),
-  firstName: z.string().trim().min(1).max(80),
-  age: z.number().int().min(5).max(120),
+  participantName: z.string().trim().min(1).max(120),
+  gender: z.enum(["Homme", "Femme"]),
+  ageRange: z.enum(["8 - 18", "19 - 29", "30 - 40", "40 - 50", "+ de 50"]),
   email: z.string().trim().email().max(200),
   phone: z.string().trim().min(6).max(30),
   profession: z.string().trim().min(1).max(80),
-  organization: z.string().trim().max(120),
+  receiveUpdates: z.boolean(),
 });
 
 export function participationRate(present: number, total: number) {

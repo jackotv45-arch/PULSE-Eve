@@ -18,10 +18,10 @@ import { getEventData, getMe, listEvents } from "@/lib/admin/admin.functions";
 export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
-      { title: "Administration — PULSE Libreville" },
-      { name: "description", content: "Back-office PULSE : événements, inscrits, contrôle des entrées et équipe." },
-      { property: "og:title", content: "Administration — PULSE Libreville" },
-      { property: "og:description", content: "Back-office PULSE : événements, inscrits, contrôle des entrées et équipe." },
+      { title: "Administration — UENERGY Libreville" },
+      { name: "description", content: "Back-office UENERGY : événements, inscrits, contrôle des entrées et équipe." },
+      { property: "og:title", content: "Administration — UENERGY Libreville" },
+      { property: "og:description", content: "Back-office UENERGY : événements, inscrits, contrôle des entrées et équipe." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex, nofollow" },
@@ -39,7 +39,7 @@ const TABS: { id: Tab; label: string; icon: typeof Users; adminOnly?: boolean; e
   { id: "registrations", label: "Inscrits", icon: ClipboardList, eyebrow: "03 / PARTICIPANTS", title: ["TOUS LES", "INSCRITS."] },
   { id: "scan", label: "Contrôle d’entrée", icon: ScanLine, eyebrow: "04 / JOUR J", title: ["SCAN.", "VALIDÉ."] },
   { id: "journal", label: "Journal", icon: ScrollText, eyebrow: "05 / TRAÇABILITÉ", title: ["CHAQUE ACTION", "TRACÉE."] },
-  { id: "team", label: "Équipe & admins", icon: Users, adminOnly: true, eyebrow: "06 / ACCÈS", title: ["QUI GÈRE", "PULSE."] },
+  { id: "team", label: "Équipe & admins", icon: Users, adminOnly: true, eyebrow: "06 / ACCÈS", title: ["QUI GÈRE", "UENERGY."] },
 ];
 
 function AdminPage() {

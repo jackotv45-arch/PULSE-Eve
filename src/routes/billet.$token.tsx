@@ -17,10 +17,10 @@ export const Route = createFileRoute("/billet/$token")({
   },
   head: () => ({
     meta: [
-      { title: "Mon billet — PULSE FIT DAY" },
-      { name: "description", content: "Votre QR code personnel d’entrée au PULSE FIT DAY." },
-      { property: "og:title", content: "Mon billet — PULSE FIT DAY" },
-      { property: "og:description", content: "Votre QR code personnel d’entrée au PULSE FIT DAY." },
+      { title: "Mon billet — UENERGY FIT DAY" },
+      { name: "description", content: "Votre QR code personnel d’entrée à UENERGY FIT DAY." },
+      { property: "og:title", content: "Mon billet — UENERGY FIT DAY" },
+      { property: "og:description", content: "Votre QR code personnel d’entrée à UENERGY FIT DAY." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex, nofollow" },
@@ -88,7 +88,7 @@ function TicketView({ token }: { token: string }) {
           <h1>
             {nouveau ? "C’EST NOTÉ," : "À BIENTÔT,"}
             <br />
-            <em>{ticket.firstName.toUpperCase()}.</em>
+            <em>{ticket.participantName.toUpperCase()}.</em>
           </h1>
           <p>
             Votre place au {ticket.eventTitle} est réservée. Présentez ce QR code à l’entrée : il sera scanné une
@@ -121,11 +121,11 @@ function TicketView({ token }: { token: string }) {
 
         <div className="member-card">
           <div className="member-top">
-            <span className="logo">PULSE</span>
+            <span className="logo">UENERGY</span>
             <span>{ticket.eventTitle}</span>
           </div>
           <h3>
-            {ticket.firstName} {ticket.lastName}
+            {ticket.participantName}
           </h3>
           <div className="ticket-details">
             <span>
@@ -140,7 +140,7 @@ function TicketView({ token }: { token: string }) {
             </span>
           </div>
           <div className="qr-image">
-            {qr && !cancelled && <img src={qr} alt={`QR code d’entrée de ${ticket.firstName} ${ticket.lastName}`} />}
+            {qr && !cancelled && <img src={qr} alt={`QR code d’entrée de ${ticket.participantName}`} />}
           </div>
           <code>{ticket.reference}</code>
           <small>Billet nominatif · Valable pour une seule entrée</small>

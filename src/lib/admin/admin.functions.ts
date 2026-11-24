@@ -24,6 +24,7 @@ export type AdminEvent = {
   venue: string;
   address: string;
   capacity: number | null;
+  participantsTargetMin: number | null;
   registrationsOpen: boolean;
   organizer: string;
   heroImage: string;
@@ -47,6 +48,7 @@ function mapEvent(e: Row): AdminEvent {
     venue: s(e["venue"]),
     address: s(e["address"]),
     capacity: (e["capacity"] as number | null) ?? null,
+    participantsTargetMin: (e["participants_target_min"] as number | null) ?? null,
     registrationsOpen: Boolean(e["registrations_open"]),
     organizer: s(e["organizer"]),
     heroImage: s(e["hero_image"]),
@@ -60,7 +62,8 @@ function mapEvent(e: Row): AdminEvent {
 
 export const getBootstrapStatus = createServerFn({ method: "GET" }).handler(async () => {
   const { adminDb } = await import("./admin-client.server");
-  const { count } = await adminDb().from("staff").select("user_id", { count: "exact", head: true });
+  const { count, error } = await adminDb().from("staff").select("user_id", { count: "exact", head: true });
+  if (error) throw new Error(`Impossible de vérifier les comptes administrateurs : ${error.message}`);
   return { needsSetup: (count ?? 0) === 0 };
 });
 
@@ -80,7 +83,8 @@ export const bootstrapFirstAdmin = createServerFn({ method: "POST" })
       email_confirm: true,
     });
     if (error || !created.user) throw new Error(error?.message ?? "Création impossible");
-    await db.from("staff").insert({ user_id: created.user.id, email: data.email, full_name: data.fullName, role: "admin" });
+    const { error: staffError } = await db.from("staff").insert({ user_id: created.user.id, email: data.email, full_name: data.fullName, role: "admin" });
+    if (staffError) throw new Error(`Compte créé, mais son accès administrateur n’a pas pu être enregistré : ${staffError.message}`);
     return { ok: true };
   });
 
@@ -112,6 +116,7 @@ export const saveEvent = createServerFn({ method: "POST" })
       venue: data.venue,
       address: data.address || null,
       capacity: data.capacity,
+      participants_target_min: data.participantsTargetMin,
       registrations_open: data.registrationsOpen,
       organizer: data.organizer || null,
       hero_image: data.heroImage || null,
@@ -149,13 +154,13 @@ export const deleteEvent = createServerFn({ method: "POST" })
 export type AdminRegistration = {
   id: string;
   reference: string;
-  lastName: string;
-  firstName: string;
-  age: number;
+  participantName: string;
+  gender: string;
+  ageRange: string;
   email: string;
   phone: string;
   profession: string;
-  organization: string;
+  receiveUpdates: boolean;
   status: "confirmed" | "cancelled";
   checkedInAt: string | null;
   createdAt: string;
@@ -177,19 +182,19 @@ export const getEventData = createServerFn({ method: "GET" })
     const registrations: AdminRegistration[] = (regs.data as Row[]).map((r) => ({
       id: s(r["id"]),
       reference: s(r["reference"]),
-      lastName: s(r["last_name"]),
-      firstName: s(r["first_name"]),
-      age: Number(r["age"]),
+      participantName: s(r["participant_name"]) || [r["first_name"], r["last_name"]].filter(Boolean).map(s).join(" "),
+      gender: s(r["gender"]),
+      ageRange: s(r["age_range"]) || (r["age"] == null ? "" : `${s(r["age"])} ans`),
       email: s(r["email"]),
       phone: s(r["phone"]),
       profession: s(r["profession"]),
-      organization: s(r["organization"]),
+      receiveUpdates: Boolean(r["receive_updates"]),
       status: r["status"] as AdminRegistration["status"],
       checkedInAt: (r["checked_in_at"] as string | null) ?? null,
       createdAt: s(r["created_at"]),
     }));
     const names = new Map((staff.data as Row[] | null)?.map((x) => [s(x["user_id"]), s(x["full_name"]) || s(x["email"])]));
-    const regName = new Map(registrations.map((r) => [r.id, `${r.firstName} ${r.lastName}`]));
+    const regName = new Map(registrations.map((r) => [r.id, r.participantName]));
     const audit: AuditEntry[] = ((logs.data as Row[] | null) ?? []).map((l) => ({
       id: s(l["id"]),
       action: s(l["action"]),
@@ -208,15 +213,15 @@ export const updateRegistration = createServerFn({ method: "POST" })
     const { data: r, error } = await context.db
       .from("registrations")
       .update({
-        last_name: data.lastName,
-        first_name: data.firstName,
-        age: data.age,
+        participant_name: data.participantName,
+        gender: data.gender,
+        age_range: data.ageRange,
         email: data.email,
         email_normalized: data.email.toLowerCase(),
         phone: data.phone,
         phone_normalized: normalizePhone(data.phone),
         profession: data.profession,
-        organization: data.organization || null,
+        receive_updates: data.receiveUpdates,
         updated_at: new Date().toISOString(),
       })
       .eq("id", data.id)

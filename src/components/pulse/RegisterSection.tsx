@@ -4,44 +4,41 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, CircleX, Ticket } from "lucide-react";
 import { registerParticipant, type PublicEvent } from "@/lib/event.functions";
-import { REGISTER_ERRORS, registrationSchema } from "@/lib/registration";
+import { AGE_RANGE_OPTIONS, GENDER_OPTIONS, REGISTER_ERRORS, registrationSchema } from "@/lib/registration";
 import { delay } from "./reveal";
 
 const LAST_TICKET_KEY = "pulse-last-ticket";
 
 type Values = {
-  lastName: string;
-  firstName: string;
-  age: string;
   email: string;
+  participantName: string;
+  gender: "" | (typeof GENDER_OPTIONS)[number];
+  ageRange: "" | (typeof AGE_RANGE_OPTIONS)[number];
   phone: string;
   profession: string;
-  organization: string;
+  receiveUpdates: boolean | null;
   consent: boolean;
   website: string;
 };
 
 const EMPTY: Values = {
-  lastName: "",
-  firstName: "",
-  age: "",
   email: "",
+  participantName: "",
+  gender: "",
+  ageRange: "",
   phone: "",
   profession: "",
-  organization: "",
+  receiveUpdates: null,
   consent: false,
   website: "",
 };
 
-const FIELDS: { name: keyof Values; label: string; type: string; autoComplete: string; placeholder: string; optional?: boolean; full?: boolean; inputMode?: "numeric" | "tel" | "email" }[] = [
-  { name: "lastName", label: "Nom", type: "text", autoComplete: "family-name", placeholder: "Mba" },
-  { name: "firstName", label: "Prénom", type: "text", autoComplete: "given-name", placeholder: "Clarisse" },
-  { name: "age", label: "Âge", type: "text", autoComplete: "off", placeholder: "28", inputMode: "numeric" },
-  { name: "phone", label: "Téléphone", type: "tel", autoComplete: "tel", placeholder: "+241 77 12 34 56", inputMode: "tel" },
+const FIELDS = [
   { name: "email", label: "Adresse e-mail", type: "email", autoComplete: "email", placeholder: "vous@exemple.com", full: true, inputMode: "email" },
-  { name: "profession", label: "Profession", type: "text", autoComplete: "organization-title", placeholder: "Infirmière" },
-  { name: "organization", label: "Organisation / entreprise", type: "text", autoComplete: "organization", placeholder: "CHU de Libreville", optional: true },
-];
+  { name: "participantName", label: "Nom ou prénom ou pseudo", type: "text", autoComplete: "name", placeholder: "Votre nom ou pseudo", full: true },
+  { name: "phone", label: "Téléphone (WhatsApp de préférence)", type: "tel", autoComplete: "tel", placeholder: "+241 77 12 34 56", inputMode: "tel", full: true },
+  { name: "profession", label: "Profession / fonction", type: "text", autoComplete: "organization-title", placeholder: "Votre profession, ou « sans »", full: true },
+] as const;
 
 export default function RegisterSection({ event }: { event: PublicEvent }) {
   const [values, setValues] = useState<Values>(EMPTY);
@@ -63,8 +60,8 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
   const closed = !event.registrationsOpen || new Date(event.startsAt).getTime() < Date.now();
   const full = spotsLeft != null && spotsLeft <= 0;
 
-  const set = (name: keyof Values, value: string | boolean) => {
-    setValues((v) => ({ ...v, [name]: value }));
+  const set = (name: keyof Values, value: string | boolean | null) => {
+    setValues((v) => ({ ...v, [name]: value }) as Values);
     if (errors[name]) setErrors((e) => ({ ...e, [name]: undefined }));
   };
 
@@ -79,10 +76,10 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
         if (!next[key]) next[key] = issue.message;
       }
       setErrors(next);
-      const first = FIELDS.find((f) => next[f.name])?.name ?? (next.consent ? "consent" : null);
+      const first = (Object.keys(next) as (keyof Values)[])[0];
       if (first) {
-        // Centre le champ en erreur pour qu'il ne passe pas sous le menu collé en haut.
-        const el = document.getElementById(`f-${first}`);
+        const id = first === "receiveUpdates" ? "f-receiveUpdates-oui" : first === "consent" ? "f-consent" : `f-${first}`;
+        const el = document.getElementById(id);
         el?.focus({ preventScroll: true });
         el?.scrollIntoView({ block: "center", behavior: "smooth" });
       }
@@ -162,7 +159,7 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
               <span>04</span>
               <div>
                 <strong>JE REÇOIS MON ATTESTATION</strong>
-                <p>Après l’événement, par e-mail, réservée aux participants présents.</p>
+                <p>Après l’événement, l’équipe prépare et envoie manuellement les attestations aux participants présents.</p>
               </div>
             </li>
           </ol>
@@ -173,7 +170,7 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
             <span className="dot" /> {event.title} · GRATUIT
           </div>
           <h3>JE RÉSERVE MA PLACE.</h3>
-          <p>Tous les champs sont obligatoires, sauf l’organisation.</p>
+          <p>Tous les champs sont obligatoires.</p>
 
           {lastTicket && (
             <div className="qr-result accepted" role="status">
@@ -200,32 +197,103 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
           ) : (
             <>
               <div className="form-grid">
-                {FIELDS.map((f) => (
+                {FIELDS.slice(0, 2).map((f) => (
                   <div className={`field${f.full ? " full" : ""}`} key={f.name}>
-                    <label htmlFor={`f-${f.name}`}>
-                      {f.label} {f.optional && <small>(facultatif)</small>}
-                    </label>
+                    <label htmlFor={`f-${f.name}`}>{f.label}</label>
                     <input
                       id={`f-${f.name}`}
                       name={f.name}
                       type={f.type}
-                      inputMode={f.inputMode}
+                      inputMode={"inputMode" in f ? f.inputMode : undefined}
                       autoComplete={f.autoComplete}
                       placeholder={f.placeholder}
-                      value={values[f.name] as string}
+                      value={values[f.name]}
                       onChange={(e) => set(f.name, e.target.value)}
                       aria-invalid={errors[f.name] ? true : undefined}
                       aria-describedby={errors[f.name] ? `e-${f.name}` : undefined}
-                      required={!f.optional}
+                      required
                     />
-                    {errors[f.name] && (
-                      <span className="field-error" id={`e-${f.name}`}>
-                        {errors[f.name]}
-                      </span>
-                    )}
+                    {errors[f.name] && <span className="field-error" id={`e-${f.name}`}>{errors[f.name]}</span>}
                   </div>
                 ))}
+
+                <div className="field">
+                  <label htmlFor="f-gender">Sexe</label>
+                  <select
+                    id="f-gender"
+                    name="gender"
+                    value={values.gender}
+                    onChange={(e) => set("gender", e.target.value as Values["gender"])}
+                    aria-invalid={errors.gender ? true : undefined}
+                    aria-describedby={errors.gender ? "e-gender" : undefined}
+                    required
+                  >
+                    <option value="" disabled>Sélectionnez une option</option>
+                    {GENDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                  {errors.gender && <span className="field-error" id="e-gender">{errors.gender}</span>}
+                </div>
+
+                <div className="field">
+                  <label htmlFor="f-ageRange">Âge</label>
+                  <select
+                    id="f-ageRange"
+                    name="ageRange"
+                    value={values.ageRange}
+                    onChange={(e) => set("ageRange", e.target.value as Values["ageRange"])}
+                    aria-invalid={errors.ageRange ? true : undefined}
+                    aria-describedby={errors.ageRange ? "e-ageRange" : undefined}
+                    required
+                  >
+                    <option value="" disabled>Sélectionnez une tranche</option>
+                    {AGE_RANGE_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                  {errors.ageRange && <span className="field-error" id="e-ageRange">{errors.ageRange}</span>}
+                </div>
+
+                {FIELDS.slice(2).map((f) => (
+                  <div className={`field${f.full ? " full" : ""}`} key={f.name}>
+                    <label htmlFor={`f-${f.name}`}>{f.label}</label>
+                    <input
+                      id={`f-${f.name}`}
+                      name={f.name}
+                      type={f.type}
+                      inputMode={"inputMode" in f ? f.inputMode : undefined}
+                      autoComplete={f.autoComplete}
+                      placeholder={f.placeholder}
+                      value={values[f.name]}
+                      onChange={(e) => set(f.name, e.target.value)}
+                      aria-invalid={errors[f.name] ? true : undefined}
+                      aria-describedby={errors[f.name] ? `e-${f.name}` : undefined}
+                      required
+                    />
+                    {errors[f.name] && <span className="field-error" id={`e-${f.name}`}>{errors[f.name]}</span>}
+                  </div>
+                ))}
+
+                <fieldset className="choice-field field full" aria-describedby={errors.receiveUpdates ? "e-receiveUpdates" : undefined}>
+                  <legend>Souhaitez-vous recevoir les informations relatives à UEnergy 2027 ?</legend>
+                  <div className="choice-options">
+                    {[{ value: true, label: "Oui" }, { value: false, label: "Non" }].map((option) => (
+                      <label className="choice-option" key={option.label}>
+                        <input
+                          id={`f-receiveUpdates-${option.label.toLowerCase()}`}
+                          type="radio"
+                          name="receiveUpdates"
+                          value={String(option.value)}
+                          checked={values.receiveUpdates === option.value}
+                          onChange={() => set("receiveUpdates", option.value)}
+                          aria-invalid={errors.receiveUpdates ? true : undefined}
+                          required
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {errors.receiveUpdates && <span className="field-error" id="e-receiveUpdates">{errors.receiveUpdates}</span>}
+                </fieldset>
               </div>
+
               <div className="hp-field" aria-hidden="true">
                 <label htmlFor="f-website">Ne pas remplir</label>
                 <input
@@ -245,8 +313,7 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
                   aria-invalid={errors.consent ? true : undefined}
                 />
                 <span>
-                  J’accepte que mes informations soient utilisées par PULSE pour gérer mon inscription, contrôler
-                  mon entrée et m’envoyer mon attestation de participation.
+                  J’accepte que mes informations soient utilisées pour gérer mon inscription, contrôler mon entrée et préparer mon attestation, qui sera envoyée manuellement après vérification de ma présence.
                 </span>
               </label>
               {errors.consent && <span className="field-error">{errors.consent}</span>}
@@ -265,8 +332,7 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
                 </div>
               )}
               <small className="form-note">
-                Une seule inscription par personne : l’e-mail et le téléphone servent à éviter les doublons. Vos
-                données ne sont jamais revendues.
+                Une seule inscription par personne : l’e-mail et le téléphone servent à éviter les doublons. Les attestations sont gérées manuellement depuis l’administration.
               </small>
             </>
           )}

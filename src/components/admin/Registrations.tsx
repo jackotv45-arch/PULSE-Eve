@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Download, Pencil, Printer, RotateCcw, UserCheck, X } from "lucide-react";
+import { AGE_RANGE_OPTIONS, GENDER_OPTIONS } from "@/lib/registration";
 import {
   checkIn,
   setRegistrationStatus,
@@ -36,19 +37,28 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
       if (filter === "absent" && !(r.status === "confirmed" && !r.checkedInAt)) return false;
       if (filter === "cancelled" && r.status !== "cancelled") return false;
       if (!s) return true;
-      return [r.firstName, r.lastName, r.email, r.phone, r.reference, r.organization].join(" ").toLowerCase().includes(s);
+      return [r.participantName, r.gender, r.ageRange, r.email, r.phone, r.reference, r.profession].join(" ").toLowerCase().includes(s);
     });
   }, [regs, q, filter]);
 
   function exportCsv() {
     downloadCsv(`inscrits-${event.slug}.csv`, [
-      ["Référence", "Nom", "Prénom", "Âge", "E-mail", "Téléphone", "Profession", "Organisation", "Statut", "Présence", "Inscrit le"],
+      ["Référence", "Nom ou prénom ou pseudo", "Sexe", "Tranche d’âge", "E-mail", "Téléphone", "Profession / fonction", "Informations UEnergy", "Statut", "Présence", "Inscrit le"],
       ...list.map((r) => [
-        r.reference, r.lastName, r.firstName, r.age, r.email, r.phone, r.profession, r.organization,
+        r.reference, r.participantName, r.gender, r.ageRange, r.email, r.phone, r.profession, r.receiveUpdates ? "Oui" : "Non",
         r.status === "cancelled" ? "Annulé" : "Confirmé", r.checkedInAt ? fmt(r.checkedInAt) : "Absent", fmt(r.createdAt),
       ]),
     ]);
   }
+
+  function exportAttestationRecipients() {
+    const present = regs.filter((r) => r.status === "confirmed" && r.checkedInAt);
+    downloadCsv(`attestations-${event.slug}.csv`, [
+      ["Participant", "E-mail", "Événement", "Référence", "Présence validée le"],
+      ...present.map((r) => [r.participantName, r.email, event.title, r.reference, fmt(r.checkedInAt)]),
+    ]);
+  }
+  const presentCount = regs.filter((r) => r.status === "confirmed" && r.checkedInAt).length;
 
   return (
     <>
@@ -60,9 +70,15 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
           <option value="absent">Absents</option>
           <option value="cancelled">Annulés</option>
         </select>
-        <button className="adm-btn" onClick={exportCsv}><Download size={14} /> Excel (CSV)</button>
+        <button className="adm-btn" onClick={exportCsv}><Download size={14} /> Inscriptions (CSV)</button>
+        <button className="adm-btn" onClick={exportAttestationRecipients} disabled={presentCount === 0}>
+          <Download size={14} /> Attestations des présents ({presentCount})
+        </button>
         <button className="adm-btn" onClick={() => window.print()}><Printer size={14} /> PDF</button>
       </div>
+      <p className="muted" style={{ fontSize: 11, lineHeight: 1.7, marginBottom: 16 }}>
+        Les attestations sont préparées et envoyées manuellement après validation de la présence. L’export dédié contient uniquement les participants présents.
+      </p>
       {error && <p className="adm-error" style={{ marginBottom: 12 }}>{error}</p>}
       <div className="adm-table-wrap">
         <table className="adm-table">
@@ -75,9 +91,9 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
             {list.map((r, i) => (
               <tr key={r.id} className="row-in" style={delay(Math.min(i, 15) * 30)}>
                 <td className="muted">{r.reference}</td>
-                <td><b>{r.firstName} {r.lastName}</b><br /><span className="muted">{r.age} ans</span></td>
+                <td><b>{r.participantName}</b><br /><span className="muted">{r.gender || "—"} · {r.ageRange || "—"}</span></td>
                 <td>{r.email}<br /><span className="muted">{r.phone}</span></td>
-                <td>{r.profession}<br /><span className="muted">{r.organization}</span></td>
+                <td>{r.profession}<br /><span className="muted">Infos UEnergy : {r.receiveUpdates ? "oui" : "non"}</span></td>
                 <td>{r.status === "cancelled" ? <span className="adm-badge red">Annulé</span> : <span className="adm-badge">Confirmé</span>}</td>
                 <td>{r.checkedInAt ? <span className="adm-ok">✓ {fmt(r.checkedInAt)}</span> : <span className="muted">—</span>}</td>
                 <td>
@@ -96,7 +112,7 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
                       <>
                         <button className="adm-btn sm" onClick={() => setEdit(r)} aria-label="Modifier"><Pencil size={12} /></button>
                         {r.status === "confirmed" ? (
-                          <button className="adm-btn sm danger" onClick={() => confirm(`Annuler l’inscription de ${r.firstName} ?`) && run.mutate(() => setRegistrationStatus({ data: { id: r.id, status: "cancelled" } }))}>
+                          <button className="adm-btn sm danger" onClick={() => confirm(`Annuler l’inscription de ${r.participantName} ?`) && run.mutate(() => setRegistrationStatus({ data: { id: r.id, status: "cancelled" } }))}>
                             <X size={12} /> Annuler
                           </button>
                         ) : (
@@ -122,20 +138,20 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
 }
 
 function EditModal({ reg, onClose, onSaved }: { reg: AdminRegistration; onClose: () => void; onSaved: () => void }) {
-  const [v, setV] = useState({ ...reg, age: String(reg.age) });
+  const [v, setV] = useState({ ...reg });
   const [error, setError] = useState("");
   const save = useMutation({
     mutationFn: () =>
       updateRegistration({
         data: {
-          id: reg.id, lastName: v.lastName, firstName: v.firstName, age: Number(v.age), email: v.email,
-          phone: v.phone, profession: v.profession, organization: v.organization,
+          id: reg.id, participantName: v.participantName, gender: v.gender as "Homme" | "Femme", ageRange: v.ageRange as (typeof AGE_RANGE_OPTIONS)[number], email: v.email,
+          phone: v.phone, profession: v.profession, receiveUpdates: v.receiveUpdates,
         },
       }),
     onSuccess: () => { onSaved(); onClose(); },
     onError: (e) => setError(errMsg(e)),
   });
-  const f = (k: "lastName" | "firstName" | "age" | "email" | "phone" | "profession" | "organization", l: string) => (
+  const f = (k: "participantName" | "email" | "phone" | "profession", l: string) => (
     <label className="adm-field">
       <span>{l}</span>
       <input className="adm-input" value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} />
@@ -147,8 +163,11 @@ function EditModal({ reg, onClose, onSaved }: { reg: AdminRegistration; onClose:
         <div className="eyebrow green">{reg.reference}</div>
         <h3>CORRIGER L’INSCRIPTION</h3>
         <div className="adm-form">
-          {f("lastName", "Nom")}{f("firstName", "Prénom")}{f("age", "Âge")}{f("phone", "Téléphone")}
-          {f("email", "E-mail")}{f("profession", "Profession")}{f("organization", "Organisation")}
+          {f("participantName", "Nom ou prénom ou pseudo")}
+          <label className="adm-field"><span>Sexe</span><select className="adm-select" value={v.gender} onChange={(e) => setV({ ...v, gender: e.target.value })}><option value="" disabled>Choisir…</option>{GENDER_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
+          <label className="adm-field"><span>Âge</span><select className="adm-select" value={v.ageRange} onChange={(e) => setV({ ...v, ageRange: e.target.value })}><option value="" disabled>Choisir…</option>{AGE_RANGE_OPTIONS.map((x) => <option key={x}>{x}</option>)}</select></label>
+          {f("phone", "Téléphone")}{f("email", "E-mail")}{f("profession", "Profession / fonction")}
+          <label className="adm-field"><span>Recevoir les informations UEnergy</span><select className="adm-select" value={v.receiveUpdates ? "yes" : "no"} onChange={(e) => setV({ ...v, receiveUpdates: e.target.value === "yes" })}><option value="yes">Oui</option><option value="no">Non</option></select></label>
         </div>
         {error && <p className="adm-error" style={{ marginTop: 14 }}>{error}</p>}
         <div className="adm-savebar">
