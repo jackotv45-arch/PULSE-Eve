@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Camera, CameraOff, ScanLine } from "lucide-react";
+import { Camera, CameraOff, Check, ScanLine, X } from "lucide-react";
 import { checkIn, type AdminEvent, type CheckInResult } from "@/lib/admin/admin.functions";
 import { errMsg, fmt } from "./useAdmin";
 
@@ -15,7 +15,7 @@ const SCAN_TONES: Record<ScanFeedbackStatus, { frequency: number; duration: numb
 };
 
 const SCAN_VIBRATIONS: Record<ScanFeedbackStatus, number | number[]> = {
-  ok: 70,
+  ok: [110, 55, 85],
   already: [45, 60, 45],
   cancelled: [110, 60, 110],
   unknown: [55, 45, 55],
@@ -30,8 +30,22 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
   const [camError, setCamError] = useState("");
   const [code, setCode] = useState("");
   const [result, setResult] = useState<CheckInResult | { status: "error"; message: string } | null>(null);
+  const [feedbackVisible, setFeedbackVisible] = useState(false);
   const busy = useRef(false);
   const lastCode = useRef<{ code: string; at: number }>({ code: "", at: 0 });
+  const feedbackVisibleRef = useRef(false);
+  const feedbackTimer = useRef<number | null>(null);
+
+  function showScanFeedback() {
+    feedbackVisibleRef.current = true;
+    setFeedbackVisible(true);
+    if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = window.setTimeout(() => {
+      feedbackVisibleRef.current = false;
+      setFeedbackVisible(false);
+      feedbackTimer.current = null;
+    }, 2400);
+  }
 
   function prepareAudio() {
     try {
@@ -87,10 +101,12 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
     try {
       const r = await checkIn({ data: { eventId: event.id, code: c } });
       setResult(r);
+      showScanFeedback();
       giveScanFeedback(r.status);
       await qc.invalidateQueries({ queryKey: ["admin", "data", event.id] });
     } catch (e) {
       setResult({ status: "error", message: errMsg(e) });
+      showScanFeedback();
       giveScanFeedback("error");
     } finally {
       busy.current = false;
@@ -99,6 +115,7 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
 
   useEffect(() => {
     return () => {
+      if (feedbackTimer.current !== null) window.clearTimeout(feedbackTimer.current);
       if (audioContext.current && audioContext.current.state !== "closed") {
         void audioContext.current.close();
       }
@@ -122,7 +139,7 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
         await v.play();
         const tick = () => {
           if (stopped) return;
-          if (v.readyState === v.HAVE_ENOUGH_DATA && ctx) {
+          if (!feedbackVisibleRef.current && v.readyState === v.HAVE_ENOUGH_DATA && ctx) {
             canvas.width = v.videoWidth;
             canvas.height = v.videoHeight;
             ctx.drawImage(v, 0, 0);
@@ -154,12 +171,40 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
   }
 
   const ok = result?.status === "ok";
+  const feedback = result
+    ? {
+        title:
+          result.status === "ok" ? "ENTRÉE VALIDÉE"
+          : result.status === "already" ? "DÉJÀ SCANNÉ"
+          : result.status === "cancelled" ? "INSCRIPTION ANNULÉE"
+          : result.status === "unknown" ? "QR CODE INCONNU"
+          : "ERREUR DE SCAN",
+        detail:
+          result.status === "ok" ? `${result.name} · ${result.reference}`
+          : result.status === "already" ? `${result.name} · présence déjà enregistrée`
+          : result.status === "cancelled" ? result.name
+          : result.status === "unknown" ? "Ce billet n’est pas reconnu pour cet événement."
+          : result.message,
+        success: result.status === "ok",
+      }
+    : null;
   return (
     <div className="adm-scan">
       <div>
         <div className="adm-video">
           <video ref={video} muted playsInline />
           {!on && <div className="adm-video-empty">{camError || "Activez la caméra puis présentez le QR code du billet."}</div>}
+          {feedbackVisible && feedback && (
+            <div
+              className={`adm-scan-feedback ${feedback.success ? "success" : "failure"}`}
+              role={feedback.success ? "status" : "alert"}
+              aria-live={feedback.success ? "polite" : "assertive"}
+            >
+              <div className="adm-scan-feedback-icon">{feedback.success ? <Check size={52} strokeWidth={3.5} /> : <X size={52} strokeWidth={3.5} />}</div>
+              <strong className="adm-scan-feedback-title">{feedback.title}</strong>
+              <span className="adm-scan-feedback-detail">{feedback.detail}</span>
+            </div>
+          )}
         </div>
         <div className="adm-toolbar" style={{ marginTop: 14 }}>
           <button className="button" onClick={() => { if (!on) prepareAudio(); setCamError(""); setOn((o) => !o); }}>

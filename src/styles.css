@@ -1814,6 +1814,22 @@ nav a.active { color: var(--green); }
 }
 @keyframes scanLine { to { top: 85%; } }
 .adm-video .adm-video-empty { position: absolute; inset: 0; display: grid; place-items: center; color: #8d8d8d; font-size: 12px; text-align: center; padding: 20px; }
+.adm-scan-feedback {
+  position: absolute; z-index: 2; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 24px; text-align: center; animation: scanFeedbackIn .32s cubic-bezier(.2,.8,.2,1) both;
+}
+.adm-scan-feedback.success { color: #101010; background: #f5f5f5f5; }
+.adm-scan-feedback.failure { color: #fff; background: #c91d30f5; }
+.adm-scan-feedback-icon { width: 78px; height: 78px; display: grid; place-items: center; border-radius: 50%; }
+.adm-scan-feedback.success .adm-scan-feedback-icon { color: #fff; background: #e53845; box-shadow: 0 0 0 8px #e5384526; }
+.adm-scan-feedback.failure .adm-scan-feedback-icon { color: #c91d30; background: #fff; box-shadow: 0 0 0 8px #ffffff2b; }
+.adm-scan-feedback-title { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(30px, 5vw, 48px); font-weight: 900; line-height: .95; letter-spacing: .5px; }
+.adm-scan-feedback-detail { max-width: 100%; font-size: clamp(14px, 2vw, 19px); font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
+@keyframes scanFeedbackIn {
+  from { opacity: 0; transform: scale(.92); }
+  70% { opacity: 1; transform: scale(1.025); }
+  to { opacity: 1; transform: scale(1); }
+}
 .adm-result { padding: 26px; border: 1px solid; animation: revealUp .4s ease backwards; }
 .adm-result h3 { font-size: 40px; margin: 8px 0; }
 .adm-result.ok { border-color: var(--green); background: #e5384512; }
