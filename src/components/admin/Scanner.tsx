@@ -4,15 +4,79 @@ import { Camera, CameraOff, ScanLine } from "lucide-react";
 import { checkIn, type AdminEvent, type CheckInResult } from "@/lib/admin/admin.functions";
 import { errMsg, fmt } from "./useAdmin";
 
+type ScanFeedbackStatus = CheckInResult["status"] | "error";
+
+const SCAN_TONES: Record<ScanFeedbackStatus, { frequency: number; duration: number }[]> = {
+  ok: [{ frequency: 880, duration: 0.09 }, { frequency: 1175, duration: 0.12 }],
+  already: [{ frequency: 520, duration: 0.1 }, { frequency: 420, duration: 0.12 }],
+  cancelled: [{ frequency: 330, duration: 0.15 }, { frequency: 240, duration: 0.2 }],
+  unknown: [{ frequency: 280, duration: 0.1 }, { frequency: 280, duration: 0.1 }],
+  error: [{ frequency: 180, duration: 0.28 }],
+};
+
+const SCAN_VIBRATIONS: Record<ScanFeedbackStatus, number | number[]> = {
+  ok: 70,
+  already: [45, 60, 45],
+  cancelled: [110, 60, 110],
+  unknown: [55, 45, 55],
+  error: 180,
+};
+
 export default function Scanner({ event, present, total }: { event: AdminEvent; present: number; total: number }) {
   const qc = useQueryClient();
   const video = useRef<HTMLVideoElement>(null);
+  const audioContext = useRef<AudioContext | null>(null);
   const [on, setOn] = useState(false);
   const [camError, setCamError] = useState("");
   const [code, setCode] = useState("");
   const [result, setResult] = useState<CheckInResult | { status: "error"; message: string } | null>(null);
   const busy = useRef(false);
   const lastCode = useRef<{ code: string; at: number }>({ code: "", at: 0 });
+
+  function prepareAudio() {
+    try {
+      if (!window.AudioContext) return;
+      const context = audioContext.current ?? new window.AudioContext();
+      audioContext.current = context;
+      if (context.state === "suspended") void context.resume().catch(() => {});
+    } catch {
+      // Le retour visuel reste disponible si le navigateur bloque l’audio.
+    }
+  }
+
+  function playScanFeedback(status: ScanFeedbackStatus) {
+    try {
+      const context = audioContext.current;
+      if (!context || context.state !== "running") return;
+
+      let startAt = context.currentTime + 0.015;
+      for (const tone of SCAN_TONES[status]) {
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(tone.frequency, startAt);
+        gain.gain.setValueAtTime(0, startAt);
+        gain.gain.linearRampToValueAtTime(0.07, startAt + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, startAt + tone.duration);
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start(startAt);
+        oscillator.stop(startAt + tone.duration);
+        startAt += tone.duration + 0.055;
+      }
+    } catch {
+      // Le retour visuel reste disponible si l’audio échoue pendant la lecture.
+    }
+  }
+
+  function giveScanFeedback(status: ScanFeedbackStatus) {
+    playScanFeedback(status);
+    try {
+      if (navigator.vibrate) navigator.vibrate(SCAN_VIBRATIONS[status]);
+    } catch {
+      // Certains navigateurs ne permettent pas la vibration.
+    }
+  }
 
   async function submitCode(raw: string) {
     const c = raw.trim();
@@ -23,14 +87,23 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
     try {
       const r = await checkIn({ data: { eventId: event.id, code: c } });
       setResult(r);
-      if (navigator.vibrate) navigator.vibrate(r.status === "ok" ? 80 : [60, 60, 60]);
+      giveScanFeedback(r.status);
       await qc.invalidateQueries({ queryKey: ["admin", "data", event.id] });
     } catch (e) {
       setResult({ status: "error", message: errMsg(e) });
+      giveScanFeedback("error");
     } finally {
       busy.current = false;
     }
   }
+
+  useEffect(() => {
+    return () => {
+      if (audioContext.current && audioContext.current.state !== "closed") {
+        void audioContext.current.close();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!on) return;
@@ -75,6 +148,7 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
 
   function manual(e: FormEvent) {
     e.preventDefault();
+    prepareAudio();
     void submitCode(code);
     setCode("");
   }
@@ -88,7 +162,7 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
           {!on && <div className="adm-video-empty">{camError || "Activez la caméra puis présentez le QR code du billet."}</div>}
         </div>
         <div className="adm-toolbar" style={{ marginTop: 14 }}>
-          <button className="button" onClick={() => { setCamError(""); setOn((o) => !o); }}>
+          <button className="button" onClick={() => { if (!on) prepareAudio(); setCamError(""); setOn((o) => !o); }}>
             {on ? <>Arrêter la caméra <CameraOff size={18} /></> : <>Activer la caméra <Camera size={18} /></>}
           </button>
         </div>
