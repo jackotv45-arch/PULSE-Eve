@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Download, Pencil, Printer, RotateCcw, UserCheck, X } from "lucide-react";
+import { Download, Pencil, Printer, RotateCcw, Trash2, UserCheck, X } from "lucide-react";
 import { SiteSelect } from "@/components/ui/site-select";
 import { AGE_RANGE_OPTIONS, GENDER_OPTIONS } from "@/lib/registration";
 import {
   checkIn,
+  resetEventRegistrations,
   setRegistrationStatus,
   undoCheckIn,
   updateRegistration,
@@ -20,16 +21,50 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
   const [filter, setFilter] = useState<"all" | "present" | "absent" | "cancelled">("all");
   const [edit, setEdit] = useState<AdminRegistration | null>(null);
   const [error, setError] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetConfirmation, setResetConfirmation] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetSuccess, setResetSuccess] = useState("");
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin", "data", event.id] });
   const run = useMutation({
     mutationFn: (fn: () => Promise<unknown>) => fn(),
     onSuccess: async () => {
       setError("");
+      setResetSuccess("");
       await refresh();
       await qc.invalidateQueries({ queryKey: ["event"] });
     },
     onError: (e) => setError(errMsg(e)),
   });
+  const reset = useMutation({
+    mutationFn: () => resetEventRegistrations({ data: { eventId: event.id, confirmation: resetConfirmation } }),
+    onSuccess: async ({ registrations, journalEntries }) => {
+      setResetOpen(false);
+      setResetConfirmation("");
+      setResetError("");
+      setResetSuccess(
+        `${registrations} inscription${registrations === 1 ? "" : "s"} supprimée${registrations === 1 ? "" : "s"} et ${journalEntries} mouvement${journalEntries === 1 ? "" : "s"} de test effacé${journalEntries === 1 ? "" : "s"}.`,
+      );
+      await refresh();
+      await qc.invalidateQueries({ queryKey: ["event"] });
+    },
+    onError: (e) => setResetError(errMsg(e)),
+  });
+  const resetConfirmationMatches = resetConfirmation.trim() === event.title.trim();
+
+  function openReset() {
+    setResetConfirmation("");
+    setResetError("");
+    setResetSuccess("");
+    setResetOpen(true);
+  }
+
+  function closeReset() {
+    if (reset.isPending) return;
+    setResetOpen(false);
+    setResetConfirmation("");
+    setResetError("");
+  }
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -83,7 +118,18 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
           <Download size={14} /> Attestations des présents ({presentCount})
         </button>
         <button className="adm-btn" onClick={() => window.print()}><Printer size={14} /> PDF</button>
+        {isAdmin && (
+          <button className="adm-btn danger" onClick={openReset} disabled={event.registrationsOpen || reset.isPending}>
+            <Trash2 size={14} /> Réinitialiser ({regs.length})
+          </button>
+        )}
       </div>
+      {resetSuccess && <p className="adm-ok" role="status" style={{ margin: "0 0 12px", fontSize: 12 }}>{resetSuccess}</p>}
+      {isAdmin && event.registrationsOpen && (
+        <p className="muted" style={{ fontSize: 11, lineHeight: 1.6, marginBottom: 12 }}>
+          Fermez d’abord les inscriptions dans « Événement & site » pour activer la remise à zéro.
+        </p>
+      )}
       <p className="muted" style={{ fontSize: 11, lineHeight: 1.7, marginBottom: 16 }}>
         Les attestations sont préparées et envoyées manuellement après validation de la présence. L’export dédié contient uniquement les participants présents.
       </p>
@@ -140,6 +186,39 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
           </tbody>
         </table>
       </div>
+      {resetOpen && (
+        <div className="adm-modal-back" onClick={closeReset}>
+          <div
+            className="adm-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reset-registrations-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="adm-error" style={{ fontSize: 10, letterSpacing: 1.6, fontWeight: 700 }}>ACTION IRRÉVERSIBLE</div>
+            <h3 id="reset-registrations-title">RÉINITIALISER LES INSCRIPTIONS ?</h3>
+            <p className="muted" style={{ fontSize: 12, lineHeight: 1.7 }}>
+              Toutes les inscriptions de « {event.title} » seront supprimées, y compris les inscriptions annulées et les présences validées.
+              Les mouvements d’inscription et de scan associés seront aussi retirés du journal. Les réglages de l’événement seront conservés.
+            </p>
+            <label className="adm-field full" style={{ marginTop: 20 }}>
+              <span>Saisissez le nom exact de l’événement : <b style={{ color: "#f5f5f5" }}>{event.title}</b></span>
+              <input className="adm-input" value={resetConfirmation} onChange={(e) => setResetConfirmation(e.target.value)} autoFocus />
+            </label>
+            {resetError && <p className="adm-error" role="alert" style={{ marginTop: 12 }}>{resetError}</p>}
+            <div className="adm-savebar">
+              <button className="adm-btn" onClick={closeReset} disabled={reset.isPending}>Garder les données</button>
+              <button
+                className="adm-btn danger"
+                onClick={() => reset.mutate()}
+                disabled={reset.isPending || !resetConfirmationMatches || event.registrationsOpen}
+              >
+                <Trash2 size={13} /> {reset.isPending ? "Suppression…" : "Supprimer définitivement"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {edit && <EditModal reg={edit} onClose={() => setEdit(null)} onSaved={refresh} />}
     </>
   );

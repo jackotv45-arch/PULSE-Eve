@@ -224,6 +224,26 @@ export const getEventData = createServerFn({ method: "GET" })
     return { registrations, audit };
   });
 
+/** Efface les inscriptions et leurs scans de test pour un événement fermé, après confirmation de son nom. */
+export const resetEventRegistrations = createServerFn({ method: "POST" })
+  .middleware([requireAdmin])
+  .validator((i: unknown) => z.object({ eventId: uuid, confirmation: z.string().trim().min(1).max(200) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: result, error } = await context.db.rpc("reset_event_registrations", {
+      p_event_id: data.eventId,
+      p_confirmation: data.confirmation,
+    });
+    if (error) throw new Error(error.message);
+    if (!result || typeof result !== "object") throw new Error("La remise à zéro n’a pas renvoyé de résultat valide.");
+    const counts = result as { deleted_registrations?: unknown; deleted_journal_entries?: unknown };
+    const registrations = Number(counts.deleted_registrations);
+    const journalEntries = Number(counts.deleted_journal_entries);
+    if (!Number.isSafeInteger(registrations) || !Number.isSafeInteger(journalEntries)) {
+      throw new Error("Le résultat de la remise à zéro est invalide.");
+    }
+    return { registrations, journalEntries };
+  });
+
 export const updateRegistration = createServerFn({ method: "POST" })
   .middleware([requireAdmin])
   .validator((i: unknown) => registrationEditSchema.parse(i))
