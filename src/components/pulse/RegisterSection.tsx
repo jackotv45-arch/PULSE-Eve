@@ -322,7 +322,16 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
               <button className="button submit" type="submit" disabled={submitting}>
                 {submitting ? "Inscription en cours…" : "Valider mon inscription"} <ArrowUpRight aria-hidden size={20} />
               </button>
-
+              <p style={{ marginTop: 14, fontSize: 11, textAlign: "center", color: "#9a9a9a" }}>
+                Vous n'avez pas votre billet sous la main ?{" "}
+                <Link
+                  className="text-link"
+                  to="/recup-billet"
+                  style={{ marginLeft: 6, gap: 10 }}
+                >
+                  Récupérez-le par e-mail
+                </Link>
+              </p>
               {formError && (
                 <div className="qr-result denied" role="alert">
                   <CircleX aria-hidden size={20} />
@@ -335,16 +344,6 @@ export default function RegisterSection({ event }: { event: PublicEvent }) {
               <small className="form-note">
                 Une seule inscription par personne : l’e-mail et le téléphone servent à éviter les doublons. Les attestations sont gérées manuellement depuis l’administration.
               </small>
-              <p style={{ marginTop: 18, fontSize: 11, textAlign: "center", color: "#9a9a9a" }}>
-                Vous n’avez pas votre billet sous la main ?{" "}
-                <Link
-                  className="text-link"
-                  to="/recup-billet"
-                  style={{ marginLeft: 6, gap: 10 }}
-                >
-                  Récupérez-le par e-mail
-                </Link>
-              </p>
             </>
           )}
         </form>
