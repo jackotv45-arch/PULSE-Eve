@@ -157,3 +157,38 @@ export const getTicket = createServerFn({ method: "GET" })
       eventAddress: r["event_address"] ?? null,
     };
   });
+
+  export type TicketByEmail = {
+    token: string;
+    reference: string;
+    eventTitle: string;
+    eventStartsAt: string;
+  };
+
+  /** Recherche un billet confirmé par e-mail (page "récupérer mon billet"). */
+  export const getTicketByEmail = createServerFn({ method: "POST" })
+    .validator((input: unknown) =>
+      z.object({ email: z.string().email(), eventSlug: z.string().min(1).max(80) }).parse(input),
+    )
+    .handler(async ({ data }): Promise<TicketByEmail | null> => {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: reg, error } = await supabaseAdmin
+        .from("registrations")
+        .select("qr_token, reference, event_id")
+        .eq("email_normalized", data.email.toLowerCase())
+        .eq("status", "confirmed")
+        .maybeSingle();
+      if (error || !reg) return null;
+      const { data: ev, error: evError } = await supabaseAdmin
+        .from("events")
+        .select("title, starts_at")
+        .eq("id", reg.event_id)
+        .single();
+      if (evError || !ev) return null;
+      return {
+        token: reg.qr_token as string,
+        reference: reg.reference as string,
+        eventTitle: ev.title as string,
+        eventStartsAt: ev.starts_at as string,
+      };
+    });

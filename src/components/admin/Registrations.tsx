@@ -25,6 +25,7 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
   const [resetConfirmation, setResetConfirmation] = useState("");
   const [resetError, setResetError] = useState("");
   const [resetSuccess, setResetSuccess] = useState("");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin", "data", event.id] });
   const run = useMutation({
     mutationFn: (fn: () => Promise<unknown>) => fn(),
@@ -65,6 +66,42 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
     setResetConfirmation("");
     setResetError("");
   }
+
+  const toggleSelect = (id: string) => {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) setSelected(new Set(list.map((r) => r.id)));
+    else setSelected(new Set());
+  };
+  const isSelected = (id: string) => selected.has(id);
+  const bulkCancel = async () => {
+    await run.mutate(async () => {
+      await Promise.all(
+        [...selected].map((id) =>
+          setRegistrationStatus({ data: { id, status: "cancelled" } })
+        ),
+      );
+      setSelected(new Set());
+      await refresh();
+    });
+  };
+  const bulkRestore = async () => {
+    await run.mutate(async () => {
+      await Promise.all(
+        [...selected].map((id) =>
+          setRegistrationStatus({ data: { id, status: "confirmed" } })
+        ),
+      );
+      setSelected(new Set());
+      await refresh();
+    });
+  };
 
   const list = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -134,16 +171,46 @@ export default function Registrations({ event, regs, isAdmin }: { event: AdminEv
         Les attestations sont préparées et envoyées manuellement après validation de la présence. L’export dédié contient uniquement les participants présents.
       </p>
       {error && <p className="adm-error" style={{ marginBottom: 12 }}>{error}</p>}
+      {selected.size > 0 && (
+        <div className="adm-toolbar" style={{ marginBottom: 12, paddingTop: 10, borderTop: "1px solid #333", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <span className="muted">{selected.size} sélectionné{selected.size > 1 ? "s" : ""}</span>
+          <button className="adm-btn danger" onClick={bulkCancel} disabled={run.isPending}>
+            Annuler la sélection
+          </button>
+          <button className="adm-btn" onClick={bulkRestore} disabled={run.isPending}>
+            Rétablir la sélection
+          </button>
+          <button className="adm-btn" onClick={() => setSelected(new Set())} disabled={run.isPending}>
+            Désélectionner
+          </button>
+        </div>
+      )}
       <div className="adm-table-wrap">
         <table className="adm-table">
           <thead>
             <tr>
+              <th style={{ width: 44 }}>
+                <input
+                  type="checkbox"
+                  checked={list.length > 0 && selected.size === list.length}
+                  onChange={(e) => toggleSelectAll(e.target.checked)}
+                  aria-label="Tout sélectionner"
+                />
+              </th>
               <th>Réf.</th><th>Participant</th><th>Contact</th><th>Profession</th><th>Statut</th><th>Présence</th><th />
             </tr>
           </thead>
           <tbody>
             {list.map((r, i) => (
-              <tr key={r.id} className="row-in" style={delay(Math.min(i, 15) * 30)}>
+              <tr key={r.id} className="row-in" style={{ ...delay(Math.min(i, 15) * 30), backgroundColor: isSelected(r.id) ? "rgba(255,255,255,0.06)" : undefined }}>
+                <td style={{ width: 44 }}>
+                  <input
+                    type="checkbox"
+                    checked={isSelected(r.id)}
+                    onChange={() => toggleSelect(r.id)}
+                    aria-label={`Sélectionner ${r.reference}`}
+                  />
+                </td>
                 <td className="muted">{r.reference}</td>
                 <td><b>{r.participantName}</b><br /><span className="muted">{r.gender || "—"} · {r.ageRange || "—"}</span></td>
                 <td>{r.email}<br /><span className="muted">{r.phone}</span></td>

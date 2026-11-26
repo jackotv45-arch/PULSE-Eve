@@ -6,6 +6,14 @@ import { errMsg, fmt } from "./useAdmin";
 
 type ScanFeedbackStatus = CheckInResult["status"] | "error";
 
+type PendingScan = {
+  eventId: string;
+  token?: string;
+  registrationId?: string;
+  actor: string;
+  at: number;
+};
+
 const SCAN_TONES: Record<ScanFeedbackStatus, { frequency: number; duration: number }[]> = {
   ok: [{ frequency: 880, duration: 0.09 }, { frequency: 1175, duration: 0.12 }],
   already: [{ frequency: 520, duration: 0.1 }, { frequency: 420, duration: 0.12 }],
@@ -35,6 +43,7 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
   const lastCode = useRef<{ code: string; at: number }>({ code: "", at: 0 });
   const feedbackVisibleRef = useRef(false);
   const feedbackTimer = useRef<number | null>(null);
+  const pendingScans = useRef<PendingScan[]>([]);
 
   function showScanFeedback() {
     feedbackVisibleRef.current = true;
@@ -99,13 +108,21 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
     lastCode.current = { code: c, at: Date.now() };
     busy.current = true;
     try {
-      const r = await checkIn({ data: { eventId: event.id, code: c } });
-      setResult(r);
-      showScanFeedback();
-      giveScanFeedback(r.status);
-      await qc.invalidateQueries({ queryKey: ["admin", "data", event.id] });
+      if (!navigator.onLine) {
+        pendingScans.current.push({ eventId: event.id, token: c, actor: "", at: Date.now() });
+        setResult({ status: "ok", name: "Hors-ligne", reference: "en attente" });
+        showScanFeedback();
+        giveScanFeedback("ok");
+      } else {
+        const r = await checkIn({ data: { eventId: event.id, code: c } });
+        setResult(r);
+        showScanFeedback();
+        giveScanFeedback(r.status);
+        await qc.invalidateQueries({ queryKey: ["admin", "data", event.id] });
+      }
     } catch (e) {
-      setResult({ status: "error", message: errMsg(e) });
+      pendingScans.current.push({ eventId: event.id, token: c, actor: "", at: Date.now() });
+      setResult({ status: "error", message: "Hors-ligne — scan mis en attente" });
       showScanFeedback();
       giveScanFeedback("error");
     } finally {
@@ -121,6 +138,25 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
       }
     };
   }, []);
+
+  useEffect(() => {
+    const handleOnline = async () => {
+      const toSync = [...pendingScans.current];
+      pendingScans.current = [];
+      for (const scan of toSync) {
+        try {
+          await checkIn({ data: { eventId: scan.eventId, code: scan.token } });
+          await qc.invalidateQueries({ queryKey: ["admin", "data", event.id] });
+        } catch {
+          // Déjà scanné ou autre — la base gère l’unicité via row lock
+        }
+      }
+    };
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [event.id, qc]);
 
   useEffect(() => {
     if (!on) return;
@@ -191,6 +227,11 @@ export default function Scanner({ event, present, total }: { event: AdminEvent; 
   return (
     <div className="adm-scan">
       <div>
+        {pendingScans.current.length > 0 && (
+          <div className="adm-toolbar" style={{ marginBottom: 10, padding: 8, background: "rgba(255, 165, 0, 0.1)", border: "1px solid rgba(255, 165, 0, 0.3)", borderRadius: 6, fontSize: 11, color: "#f5a623" }}>
+            ⚠ {pendingScans.current.length} scan{pendingScans.current.length > 1 ? "s" : ""} en attente de synchronisation (hors-ligne)
+          </div>
+        )}
         <div className="adm-video">
           <video ref={video} muted playsInline />
           {!on && <div className="adm-video-empty">{camError || "Activez la caméra puis présentez le QR code du billet."}</div>}
