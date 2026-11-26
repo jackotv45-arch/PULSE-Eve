@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { ArrowRight, Loader } from "lucide-react";
 import Header from "@/components/pulse/Header";
 import { getTicketByEmail } from "@/lib/event.functions";
 
@@ -30,7 +31,8 @@ function RecupBillet() {
       } else {
         setStatus("notfound");
       }
-    } catch {
+    } catch (e) {
+      console.error("getTicketByEmail failed", e);
       setStatus("error");
     }
   };
@@ -58,8 +60,22 @@ function RecupBillet() {
             />
           </div>
           <button className="button submit" type="submit" disabled={status === "loading"}>
-            {status === "loading" ? "Recherche…" : "Chercher mon billet"}
+            {status === "loading" ? (
+              <>
+                <Loader className="loading-spin" aria-hidden size={18} />
+                Recherche…
+              </>
+            ) : (
+              <>
+                Chercher mon billet <ArrowRight aria-hidden size={18} />
+              </>
+            )}
           </button>
+          {status === "loading" && (
+            <p className="muted" style={{ marginTop: 10, fontSize: 11, textAlign: "center" }}>
+              Recherche de votre billet en cours…
+            </p>
+          )}
           {status === "error" && (
             <p className="field-error">Une erreur est survenue. Réessayez plus tard.</p>
           )}

@@ -1237,6 +1237,14 @@ footer {
   50%      { transform: rotate(12deg) translateY(-14px); }
 }
 
+.loading-spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* =====================================================================
    PAGE ÉVÉNEMENT : ajouts dans le même langage visuel que le site
    ===================================================================== */
