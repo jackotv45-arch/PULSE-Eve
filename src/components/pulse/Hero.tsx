@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { ArrowRight, ArrowUpRight, CalendarDays, Clock, MapPin, Zap } from "lucide-react";
 import type { PublicEvent } from "@/lib/event.functions";
 import { formatDay, formatShortDay, formatTime } from "@/lib/format";
@@ -75,9 +74,6 @@ export default function Hero({ event }: { event: PublicEvent }) {
             <a className="text-link" href="#programme">
               Voir le programme <ArrowRight aria-hidden size={18} />
             </a>
-            <Link className="text-link" to="/recup-billet">
-              Récupérer mon billet <ArrowRight aria-hidden size={18} />
-            </Link>
           </div>
           {left !== 0 && (
             <div className="countdown" aria-label="Temps restant avant l’événement">
