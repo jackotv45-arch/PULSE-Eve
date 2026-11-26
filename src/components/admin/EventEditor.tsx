@@ -1,9 +1,14 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Plus, Trash2, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowUpRight, Plus, Trash2, ArrowUp, ArrowDown, Upload, X } from "lucide-react";
 import { deleteEvent, saveEvent, type AdminEvent } from "@/lib/admin/admin.functions";
 import { eventInputSchema, type EventInput } from "@/lib/admin/schemas";
+import { browserSupabase } from "@/lib/supabase-browser";
 import { errMsg } from "./useAdmin";
+
+const IMAGE_BUCKET = "uenergy-event-images";
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+type ImageTarget = "hero" | `programme:${number}`;
 
 /** ISO → valeur d'un champ datetime-local à l'heure de Libreville (UTC+1). */
 const toLocal = (iso: string) => {
@@ -56,7 +61,73 @@ export default function EventEditor({
     event ? { ...event, startsAt: toLocal(event.startsAt), endsAt: toLocal(event.endsAt) } : blankEvent(),
   );
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [uploadingTarget, setUploadingTarget] = useState<ImageTarget | null>(null);
   const set = <K extends keyof EventInput>(k: K, val: EventInput[K]) => setV((p) => ({ ...p, [k]: val }));
+
+  async function uploadImage(file: File, target: ImageTarget, onUploaded: (url: string) => void) {
+    const extension = file.type === "image/jpeg" ? "jpg" : file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : null;
+    if (!extension) {
+      setMsg({ ok: false, text: "Choisis une image au format JPG, PNG ou WebP." });
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE) {
+      setMsg({ ok: false, text: "L’image doit faire 5 Mo maximum." });
+      return;
+    }
+
+    setUploadingTarget(target);
+    setMsg(null);
+    try {
+      const path = `${event?.id ?? "new"}/${target.replace(":", "-")}/${crypto.randomUUID()}.${extension}`;
+      const storage = browserSupabase().storage.from(IMAGE_BUCKET);
+      const { data, error } = await storage.upload(path, file, {
+        cacheControl: "31536000",
+        contentType: file.type,
+        upsert: false,
+      });
+      if (error) throw error;
+      onUploaded(storage.getPublicUrl(data.path).data.publicUrl);
+      setMsg({ ok: true, text: "Image envoyée. Enregistre les modifications pour l’afficher sur le site." });
+    } catch (error) {
+      setMsg({ ok: false, text: `Échec de l’envoi de l’image : ${errMsg(error)}` });
+    } finally {
+      setUploadingTarget(null);
+    }
+  }
+
+  function imagePicker(label: string, value: string, target: ImageTarget, onChange: (url: string) => void) {
+    const busy = uploadingTarget !== null;
+    return (
+      <div className="adm-image-control">
+        <div className="adm-image-control-head">
+          <span>{label}</span>
+          <small>JPG, PNG ou WebP · 5 Mo maximum</small>
+        </div>
+        <div className="adm-image-control-actions">
+          <label className={`adm-btn adm-file-label${!isAdmin || busy ? " disabled" : ""}`}>
+            <Upload size={14} /> {uploadingTarget === target ? "Envoi en cours…" : value ? "Remplacer l’image" : "Choisir une image"}
+            <input
+              className="adm-image-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              disabled={!isAdmin || busy}
+              onChange={(e) => {
+                const file = e.currentTarget.files?.[0];
+                e.currentTarget.value = "";
+                if (file) void uploadImage(file, target, onChange);
+              }}
+            />
+          </label>
+          {value && (
+            <button type="button" className="adm-btn danger" disabled={!isAdmin || busy} onClick={() => onChange("")}>
+              <X size={14} /> Retirer
+            </button>
+          )}
+        </div>
+        {value && <img className="adm-image-preview" src={value} alt={`Aperçu : ${label}`} />}
+      </div>
+    );
+  }
 
   const save = useMutation({
     mutationFn: async () => {
@@ -89,7 +160,7 @@ export default function EventEditor({
     onError: (e) => setMsg({ ok: false, text: errMsg(e) }),
   });
 
-  const input = (k: "title" | "slug" | "tagline" | "venue" | "address" | "organizer" | "heroImage", label: string, full = false) => (
+  const input = (k: "title" | "slug" | "tagline" | "venue" | "address" | "organizer", label: string, full = false) => (
     <label className={`adm-field${full ? " full" : ""}`}>
       <span>{label}</span>
       <input className="adm-input" disabled={!isAdmin} value={v[k]} onChange={(e) => set(k, e.target.value)} />
@@ -139,7 +210,9 @@ export default function EventEditor({
           />
         </label>
         {input("organizer", "Organisateur")}
-        {input("heroImage", "Image principale (URL ou /images/hero.jpg)", true)}
+        <div className="full">
+          {imagePicker("Image principale", v.heroImage, "hero", (url) => set("heroImage", url))}
+        </div>
         <label className="adm-check">
           <input type="checkbox" disabled={!isAdmin} checked={v.registrationsOpen} onChange={(e) => set("registrationsOpen", e.target.checked)} />
           Inscriptions ouvertes
@@ -178,7 +251,7 @@ export default function EventEditor({
               <input className="adm-input" placeholder="Étiquette" disabled={!isAdmin} value={p.tag} onChange={(e) => up("tag", e.target.value)} />
             </div>
             <input className="adm-input" placeholder="Texte" disabled={!isAdmin} value={p.text} onChange={(e) => up("text", e.target.value)} />
-            <input className="adm-input" placeholder="Image (URL ou /images/club.jpg)" disabled={!isAdmin} value={p.img} onChange={(e) => up("img", e.target.value)} />
+            {imagePicker(`Image du temps fort ${i + 1}`, p.img, `programme:${i}`, (url) => up("img", url))}
           </div>
         );
       })}
@@ -219,14 +292,14 @@ export default function EventEditor({
             <button
               type="button"
               className="adm-btn danger"
-              disabled={del.isPending}
+              disabled={del.isPending || uploadingTarget !== null}
               onClick={() => confirm("Supprimer définitivement cet événement et toutes ses inscriptions ?") && del.mutate()}
             >
               <Trash2 size={14} /> Supprimer
             </button>
           )}
-          <button type="button" className="button" disabled={save.isPending} onClick={() => save.mutate()}>
-            {save.isPending ? "Enregistrement…" : event ? "Enregistrer les modifications" : "Créer l’événement"} <ArrowUpRight size={18} aria-hidden />
+          <button type="button" className="button" disabled={save.isPending || uploadingTarget !== null} onClick={() => save.mutate()}>
+            {uploadingTarget !== null ? "Envoi de l’image…" : save.isPending ? "Enregistrement…" : event ? "Enregistrer les modifications" : "Créer l’événement"} <ArrowUpRight size={18} aria-hidden />
           </button>
         </div>
       )}

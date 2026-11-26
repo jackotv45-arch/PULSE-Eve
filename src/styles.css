@@ -1788,6 +1788,15 @@ nav a.active { color: var(--green); }
 .adm-form .full { grid-column: 1 / -1; }
 .adm-field { display: flex; flex-direction: column; gap: 8px; }
 .adm-field > span { font-size: 9px; letter-spacing: 1.6px; color: #9a9a9a; font-weight: 600; text-transform: uppercase; }
+.adm-image-control { display: grid; gap: 10px; min-width: 0; }
+.adm-image-control-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 12px; }
+.adm-image-control-head > span { font-size: 9px; letter-spacing: 1.6px; color: #9a9a9a; font-weight: 600; text-transform: uppercase; }
+.adm-image-control-head small { color: #8d8d8d; font-size: 10px; }
+.adm-image-control-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.adm-file-label { position: relative; overflow: hidden; cursor: pointer; }
+.adm-file-label.disabled { opacity: .45; pointer-events: none; }
+.adm-image-input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.adm-image-preview { display: block; width: min(420px, 100%); max-height: 180px; object-fit: cover; border: 1px solid #ffffff1f; background: #101010; }
 .adm-check { display: flex; align-items: center; gap: 10px; font-size: 12px; cursor: pointer; }
 .adm-check input { accent-color: var(--green); width: 16px; height: 16px; }
 .adm-section-title { display: flex; align-items: center; justify-content: space-between; margin: 34px 0 16px; }
