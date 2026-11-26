@@ -64,7 +64,7 @@ function Index() {
         {event.faq.length > 0 && <Faq items={event.faq} />}
         <FinalCta full={full} />
       </main>
-      <Footer />
+      <Footer venue={event.venue} address={event.address} />
       {!full && <MobileCta spotsLeft={event.registeredCount >= 20 ? spotsLeft : null} />}
     </>
   );

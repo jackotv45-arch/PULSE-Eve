@@ -21,12 +21,13 @@ export function FinalCta({ full = false }: { full?: boolean }) {
   );
 }
 
-export default function Footer() {
+export default function Footer({ venue, address }: { venue?: string; address?: string | null } = {}) {
+  const location = venue && address ? `${venue} · ${address}` : venue || address || "Quartier Louis · Libreville · Gabon";
   return (
     <footer>
       <div className="footer-top">
         <Logo />
-        <p>Quartier Louis · Libreville · Gabon</p>
+        <p>{location}</p>
         <a href="#">Retour en haut ↑</a>
       </div>
       <div className="footer-bottom">
