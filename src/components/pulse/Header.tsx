@@ -67,13 +67,6 @@ export default function Header({ simple = false }: { simple?: boolean }) {
               {label}
             </a>
           ))}
-          <Link
-            to="/recup-billet"
-            className="nav-billet"
-            onClick={() => setOpen(false)}
-          >
-            Mon billet
-          </Link>
         </nav>
       )}
       {simple ? (
