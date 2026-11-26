@@ -1631,6 +1631,21 @@ nav a.active { color: var(--green); }
 @media (min-width: 641px) {
   nav a.active::after { transform: scaleX(1); }
 }
+nav .nav-billet {
+  color: #d4d4ce;
+  font-size: 12px;
+  position: relative;
+}
+nav .nav-billet:hover {
+  color: var(--green);
+}
+@media (min-width: 641px) {
+  nav .nav-billet::after {
+    content: ''; position: absolute; left: 0; bottom: -7px; height: 1px; width: 100%;
+    background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform .25s ease;
+  }
+  nav .nav-billet:hover::after { transform: scaleX(1); }
+}
 
 /* Formulaire : léger halo vert pour attirer l'œil */
 .register-form {
